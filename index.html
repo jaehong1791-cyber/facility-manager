@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="description" content="시설관리 안전서류 자동생성 · 연간점검계획 · 통합대시보드">
+<title>시설관리 자동화 시스템</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'맑은 고딕','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+  background:linear-gradient(160deg,#0d2d4a 0%,#1F4E79 45%,#2c5f8a 100%);min-height:100vh;}
+.hdr{padding:28px 20px 0;text-align:center}
+.hdr-logo{font-size:48px;display:block;margin-bottom:10px;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+.hdr h1{color:#fff;font-size:21px;font-weight:700;margin-bottom:5px}
+.hdr p{color:rgba(255,255,255,.6);font-size:13px}
+.org-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:7px 18px;
+  margin:14px 0 0;cursor:pointer;transition:all .2s}
+.org-badge:hover{background:rgba(255,255,255,.2)}
+.org-badge span{color:#FFE082;font-size:13px;font-weight:700}
+.org-badge small{color:rgba(255,255,255,.45);font-size:11px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+  gap:14px;padding:24px 16px;max-width:960px;margin:0 auto}
+.card{background:#fff;border-radius:16px;padding:24px 20px;cursor:pointer;
+  transition:all .2s;text-decoration:none;display:block;
+  box-shadow:0 4px 24px rgba(0,0,0,.15);border-top:4px solid var(--c,#1F4E79);
+  position:relative;overflow:hidden}
+.card:hover{transform:translateY(-4px);box-shadow:0 10px 36px rgba(0,0,0,.22)}
+.card:active{transform:scale(.97)}
+.card-badge{position:absolute;top:14px;right:14px;background:var(--c,#1F4E79);
+  color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px}
+.card-icon{font-size:38px;margin-bottom:12px;display:block}
+.card-title{font-size:16px;font-weight:700;color:#1F4E79;margin-bottom:7px}
+.card-desc{font-size:13px;color:#4a5568;line-height:1.65;margin-bottom:12px}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;background:#EBF3FB;color:#1F4E79}
+.tag.g{background:#dafbe1;color:#1a7f37}
+.tag.a{background:#fff8e1;color:#9a6700}
+.info{max-width:960px;margin:0 auto 20px;padding:0 16px}
+.info-in{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);
+  border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.info-in p{color:rgba(255,255,255,.8);font-size:12px;flex:1;line-height:1.6}
+.info-in a{color:#FFE082;font-size:12px;font-weight:700;text-decoration:none}
+.footer{text-align:center;padding:16px;color:rgba(255,255,255,.3);font-size:11px;line-height:1.8}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);
+  z-index:999;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.on{display:flex}
+.popup{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:400px;
+  max-height:90vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.3)}
+.popup-top{text-align:center;margin-bottom:20px}
+.popup-top .ic{font-size:32px;display:block;margin-bottom:8px}
+.popup-top h2{color:#1F4E79;font-size:17px;margin-bottom:4px}
+.popup-top p{color:#718096;font-size:12px}
+.fg{margin-bottom:11px}
+.fg label{display:block;font-size:11px;font-weight:700;color:#718096;margin-bottom:4px;letter-spacing:.3px}
+.fg input{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;
+  font-family:inherit;font-size:14px;outline:none;transition:border-color .15s}
+.fg input:focus{border-color:#2E75B6;box-shadow:0 0 0 3px rgba(46,117,182,.1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-s{width:100%;margin-top:14px;padding:13px;background:#1F4E79;color:#fff;
+  border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.btn-s:hover{background:#153352}
+.btn-c{width:100%;margin-top:8px;padding:10px;background:none;
+  border:1.5px solid #e2e8f0;border-radius:10px;font-family:inherit;
+  font-size:13px;color:#718096;cursor:pointer}
+@media(max-width:420px){.hdr h1{font-size:18px}.card{padding:20px 16px}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <span class="hdr-logo">🏢</span>
+  <h1>시설관리 자동화 시스템</h1>
+  <p>안전서류 · 점검계획 · 시설관리 통합 플랫폼</p>
+  <div class="org-badge" onclick="showSetup()">
+    <span id="orgName">⚙ 사업소 설정하기</span>
+    <small>클릭</small>
+  </div>
+</div>
+
+<div class="cards">
+  <a class="card" href="안전서류_자동생성기.html" style="--c:#1F4E79">
+    <span class="card-badge">핵심</span>
+    <span class="card-icon">📝</span>
+    <div class="card-title">안전서류 자동생성기</div>
+    <div class="card-desc">작업명만 입력하면 위험성평가표·TBM 일지·작업완료보고서 3종이 즉시 완성됩니다.</div>
+    <div class="tags">
+      <span class="tag">위험성평가표</span>
+      <span class="tag">TBM 일지</span>
+      <span class="tag">작업완료보고서</span>
+      <span class="tag g">Word 다운로드</span>
+    </div>
+  </a>
+  <a class="card" href="연간점검계획_자동화.html" style="--c:#2E75B6">
+    <span class="card-badge">법정</span>
+    <span class="card-icon">📅</span>
+    <div class="card-title">연간 점검계획 자동화</div>
+    <div class="card-desc">연도 한 번 설정하면 기계·전기 42개 항목 계획표가 자동 생성됩니다. D-Day 경보 포함.</div>
+    <div class="tags">
+      <span class="tag">D-Day 자동 경보</span>
+      <span class="tag">법정점검 관리</span>
+      <span class="tag g">Excel 저장</span>
+    </div>
+  </a>
+  <a class="card" href="시설관리_통합대시보드.html" style="--c:#1a7f37">
+    <span class="card-icon">🏗</span>
+    <div class="card-title">통합 시설관리 대시보드</div>
+    <div class="card-desc">설비현황·점검이력·민원관리·비용분석을 한 화면에서 통합 관리합니다.</div>
+    <div class="tags">
+      <span class="tag">설비 12종</span>
+      <span class="tag">민원 관리</span>
+      <span class="tag">비용 분석</span>
+      <span class="tag a">AI 분석</span>
+    </div>
+  </a>
+</div>
+
+<div class="info">
+  <div class="info-in">
+    <p>💡 각 카드를 클릭하면 해당 프로그램이 바로 열립니다. 크롬·엣지·웨일 권장. 오프라인 사용 가능.</p>
+    <a href="사용설명서_빠른시작가이드.docx" download>📄 사용설명서</a>
+  </div>
+</div>
+
+<div class="footer">
+  시설관리 자동화 패키지 &nbsp;·&nbsp; 오프라인 완전 지원 &nbsp;·&nbsp; 문의: 크몽 채팅<br>
+  10년 현장 경력 시설관리 전문가 제작
+</div>
+
+<!-- 설정 팝업 -->
+<div class="overlay" id="ov" onclick="if(event.target===this)closeSetup()">
+  <div class="popup">
+    <div class="popup-top">
+      <span class="ic">⚙️</span>
+      <h2>사업소 설정</h2>
+      <p>입력한 정보가 모든 프로그램에 자동 반영됩니다 (최초 1회)</p>
+    </div>
+    <div class="fg"><label>회사명 / 사업소명 *</label>
+      <input id="s0" type="text" placeholder="예) ○○빌딩 시설관리팀"></div>
+    <div class="fg"><label>반장 / 팀장 이름</label>
+      <input id="s1" type="text" placeholder="예) 홍길동"></div>
+    <div class="fg"><label>전기안전관리자</label>
+      <input id="s2" type="text" placeholder="예) 이순신"></div>
+    <div class="row2">
+      <div class="fg"><label>담당자1</label>
+        <input id="s3" type="text" placeholder="예) 김철수"></div>
+      <div class="fg"><label>담당자2</label>
+        <input id="s4" type="text" placeholder="예) 박영희"></div>
+    </div>
+    <button class="btn-s" onclick="saveSetup()">✅ 저장하고 적용</button>
+    <button class="btn-c" onclick="closeSetup()">닫기</button>
+  </div>
+</div>
+
+<script>
+function getOrg(){try{return JSON.parse(localStorage.getItem('fm_org'))||null;}catch(e){return null;}}
+function showSetup(){
+  const c=getOrg();
+  if(c){document.getElementById('s0').value=c.org||'';
+    document.getElementById('s1').value=c.leader||'';
+    document.getElementById('s2').value=c.elec||'';
+    document.getElementById('s3').value=c.p1||'';
+    document.getElementById('s4').value=c.p2||'';}
+  document.getElementById('ov').classList.add('on');
+  setTimeout(()=>document.getElementById('s0').focus(),100);
+}
+function closeSetup(){document.getElementById('ov').classList.remove('on');}
+function saveSetup(){
+  const cfg={
+    org:document.getElementById('s0').value.trim()||'우리 사업소',
+    leader:document.getElementById('s1').value.trim()||'반장',
+    elec:document.getElementById('s2').value.trim()||'전기안전관리자',
+    p1:document.getElementById('s3').value.trim()||'담당자1',
+    p2:document.getElementById('s4').value.trim()||'담당자2',
+  };
+  localStorage.setItem('fm_org',JSON.stringify(cfg));
+  document.getElementById('orgName').textContent=cfg.org+' · '+cfg.leader+' 반장';
+  closeSetup();
+}
+window.onload=function(){
+  const c=getOrg();
+  if(c)document.getElementById('orgName').textContent=c.org+' · '+c.leader+' 반장';
+  else setTimeout(showSetup,700);
+};
+</script>
+</body>
+</html>

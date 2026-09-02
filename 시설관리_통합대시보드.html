@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시설관리 프로그램</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1F4E79;--navy2:#2E75B6;--navy3:#D6E4F0;
+  --green:#1a7f37;--green2:#dafbe1;
+  --red:#cf222e;--red2:#fff0f0;
+  --amber:#9a6700;--amber2:#fff8e1;
+  --gray:#f7f9fc;--gray2:#e2e8f0;--gray3:#718096;
+  --text:#1a1a2e;--text2:#4a5568;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08);
+}
+body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:#f0f4f8;color:var(--text);font-size:14px}
+/* 헤더 */
+.header{background:var(--navy);color:#fff;height:52px;display:flex;align-items:center;padding:0 20px;position:sticky;top:0;z-index:200;gap:12px}
+.header-logo{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.header-badge{background:#F0A500;color:#1a1a00;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.api-key-wrap{display:flex;align-items:center;gap:6px}
+.api-key-wrap label{font-size:11px;color:rgba(255,255,255,.7)}
+.api-key-wrap input{font-size:12px;padding:4px 8px;border:1px solid rgba(255,255,255,.3);border-radius:5px;background:rgba(255,255,255,.1);color:#fff;width:200px}
+.api-key-wrap input::placeholder{color:rgba(255,255,255,.4)}
+.today-info{font-size:12px;color:rgba(255,255,255,.65)}
+/* 레이아웃 */
+.layout{display:flex;height:calc(100vh - 52px)}
+/* 사이드바 */
+.sidebar{width:190px;background:#fff;border-right:1px solid var(--gray2);padding:12px 0;flex-shrink:0;overflow-y:auto}
+.nav-section{margin-bottom:4px}
+.nav-label{font-size:10px;font-weight:700;color:var(--gray3);letter-spacing:.8px;text-transform:uppercase;padding:8px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;color:var(--text2);font-size:13px;border:none;background:none;width:100%;text-align:left;transition:all .15s}
+.nav-item:hover{background:var(--gray);color:var(--navy)}
+.nav-item.active{background:var(--navy3);color:var(--navy);font-weight:600}
+.nav-item .icon{font-size:15px;width:18px;text-align:center}
+/* 메인 */
+.main{flex:1;overflow-y:auto;padding:20px}
+/* 페이지 */
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+/* KPI 카드 */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.kpi-label{font-size:11px;color:var(--gray3);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.kpi-value{font-size:26px;font-weight:700;color:var(--navy)}
+.kpi-sub{font-size:11px;color:var(--gray3);margin-top:3px}
+.kpi-card.warn .kpi-value{color:var(--red)}
+.kpi-card.ok .kpi-value{color:var(--green)}
+/* 카드 */
+.card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.card-header{background:var(--navy);color:#fff;padding:10px 16px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-body{padding:16px}
+/* 테이블 */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--navy3);color:var(--navy);font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid var(--navy2);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--gray2);vertical-align:middle}
+tr:hover td{background:#f8faff}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.badge-ok{background:var(--green2);color:var(--green)}
+.badge-warn{background:var(--amber2);color:var(--amber)}
+.badge-danger{background:var(--red2);color:var(--red)}
+.badge-navy{background:var(--navy3);color:var(--navy)}
+.badge-gray{background:#f1f5f9;color:#64748b}
+/* 폼 */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.form-grid.col3{grid-template-columns:1fr 1fr 1fr}
+.form-grid.col1{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.span2{grid-column:1/-1}
+label.lbl{font-size:12px;font-weight:600;color:var(--text2)}
+input[type=text],input[type=date],input[type=number],select,textarea{font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--gray2);border-radius:var(--radius);color:var(--text);background:#fff;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--navy2);box-shadow:0 0 0 3px rgba(46,117,182,.1)}
+textarea{resize:vertical;min-height:60px}
+/* 버튼 */
+.btn{font-family:inherit;font-size:13px;font-weight:600;padding:8px 16px;border-radius:var(--radius);border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:#153352}
+.btn-secondary{background:#fff;color:var(--navy);border:1px solid var(--gray2)}.btn-secondary:hover{background:var(--gray)}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{opacity:.9}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{opacity:.9}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+/* AI 결과 */
+.ai-result{background:#f8faff;border:1px solid var(--navy3);border-radius:var(--radius);padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;min-height:80px;color:var(--text);margin-top:10px}
+.ai-result.loading{color:var(--gray3);font-style:italic}
+.spin{display:inline-block;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* 점검일정 캘린더 */
+.cal-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-top:10px}
+.cal-month{background:var(--gray);border-radius:6px;padding:8px;min-height:100px}
+.cal-month-title{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:6px;text-align:center}
+.cal-item{font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;cursor:pointer}
+.cal-done{background:var(--navy3);color:var(--navy)}
+.cal-plan{background:#e8f5e9;color:#2e7d32}
+/* 비용 차트 */
+.cost-bar-wrap{margin-top:10px}
+.cost-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.cost-label{width:90px;color:var(--text2);text-align:right;flex-shrink:0}
+.cost-bar-bg{flex:1;background:var(--gray2);border-radius:3px;height:14px;overflow:hidden}
+.cost-bar-fill{height:100%;border-radius:3px;background:var(--navy2);transition:width .5s}
+.cost-val{width:80px;color:var(--text2);font-size:11px;flex-shrink:0}
+/* 통계 */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stat-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:14px}
+.stat-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--gray2)}
+/* 민원 상태 */
+.status-todo{color:var(--red);font-weight:700}
+.status-done{color:var(--green);font-weight:700}
+/* 반응형 */
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.cal-grid{grid-template-columns:repeat(6,1fr)}}
+/* 탭 */
+.tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:2px solid var(--gray2)}
+.tab{padding:8px 16px;font-size:13px;font-weight:600;color:var(--gray3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px}
+.tab.active{color:var(--navy);border-bottom-color:var(--navy)}
+/* 알림 */
+.alert{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px}
+.alert-warn{background:var(--amber2);border:1px solid #fde68a;color:var(--amber)}
+.alert-danger{background:var(--red2);border:1px solid #fecaca;color:var(--red)}
+.alert-ok{background:var(--green2);border:1px solid #bbf7d0;color:var(--green)}
+/* 설비 상태 도트 */
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.dot-ok{background:var(--green)}.dot-warn{background:#f59e0b}.dot-bad{background:var(--red)}
+</style>
+
+<script>
+// ── 사업소 설정 초기화 ──────────────────────────────────────
+(function(){
+  const saved = localStorage.getItem('fm_org') ?
+    JSON.parse(localStorage.getItem('fm_org')) : null;
+  if(!saved){
+    // 최초 실행: 설정 팝업
+    document.addEventListener('DOMContentLoaded', function(){
+      showOrgSetup();
+    });
+  }
+})();
+
+function showOrgSetup(){
+  const overlay = document.createElement('div');
+  overlay.id = 'org-setup-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:"맑은 고딕",sans-serif';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:36px 40px;max-width:440px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:36px;margin-bottom:8px">🏢</div>
+        <h2 style="color:#1F4E79;font-size:18px;margin:0 0 6px">시설관리 프로그램 설정</h2>
+        <p style="color:#718096;font-size:13px;margin:0">최초 1회만 입력하면 이후 자동 저장됩니다.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">회사명 / 사업소명 *</label>
+          <input id="setup-org" type="text" placeholder="예) 한국마사회시설관리 대구사업소"
+            style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">반장 / 담당자 이름</label>
+          <input id="setup-leader" type="text" placeholder="예) 김재홀"
+            style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">전기안전관리자 이름</label>
+          <input id="setup-elec" type="text" placeholder="예) 이준호"
+            style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">담당자1</label>
+            <input id="setup-p1" type="text" placeholder="예) 배진영"
+              style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">담당자2</label>
+            <input id="setup-p2" type="text" placeholder="예) 박성웅"
+              style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box">
+          </div>
+        </div>
+      </div>
+      <button onclick="saveOrgSetup()"
+        style="width:100%;margin-top:20px;padding:12px;background:#1F4E79;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer">
+        ✅ 저장하고 시작하기
+      </button>
+      <p style="text-align:center;font-size:12px;color:#a0aec0;margin:12px 0 0">설정은 언제든지 우측 상단 ⚙ 버튼으로 변경 가능합니다</p>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(()=>document.getElementById('setup-org').focus(),100);
+}
+
+function saveOrgSetup(){
+  const org    = document.getElementById('setup-org').value.trim()    || '우리 사업소';
+  const leader = document.getElementById('setup-leader').value.trim() || '반장';
+  const elec   = document.getElementById('setup-elec').value.trim()   || '전기안전관리자';
+  const p1     = document.getElementById('setup-p1').value.trim()     || '담당자1';
+  const p2     = document.getElementById('setup-p2').value.trim()     || '담당자2';
+  const cfg = {org,leader,elec,p1,p2};
+  localStorage.setItem('fm_org', JSON.stringify(cfg));
+  document.getElementById('org-setup-overlay')?.remove();
+  applyOrgName(cfg);
+  location.reload();
+}
+
+function getOrg(){
+  try{ return JSON.parse(localStorage.getItem('fm_org'))||{org:'우리 사업소',leader:'반장',elec:'전기안전관리자',p1:'담당자1',p2:'담당자2'}; }
+  catch(e){ return {org:'우리 사업소',leader:'반장',elec:'전기안전관리자',p1:'담당자1',p2:'담당자2'}; }
+}
+
+function applyOrgName(cfg){
+  cfg = cfg || getOrg();
+  // 페이지 내 텍스트 치환
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  while(walker.nextNode()){
+    const n = walker.currentNode;
+    if(n.nodeValue.includes('한국마사회시설관리 대구사업소') ||
+       n.nodeValue.includes('대구사업소') ||
+       n.nodeValue.includes('KRA 대구지사 빌딩')){
+      n.nodeValue = n.nodeValue
+        .replace(/한국마사회시설관리 대구사업소/g, cfg.org)
+        .replace(/KRA 대구지사 빌딩/g, cfg.org)
+        .replace(/대구사업소/g, cfg.org);
+    }
+    if(n.nodeValue.includes('김재홀')||n.nodeValue.includes('김 재 홀')){
+      n.nodeValue=n.nodeValue.replace(/김 재 홀/g,cfg.leader).replace(/김재홀/g,cfg.leader);
+    }
+    if(n.nodeValue.includes('이준호')||n.nodeValue.includes('이 준 호')){
+      n.nodeValue=n.nodeValue.replace(/이 준 호/g,cfg.elec).replace(/이준호/g,cfg.elec);
+    }
+    if(n.nodeValue.includes('배진영')){
+      n.nodeValue=n.nodeValue.replace(/배진영/g,cfg.p1);
+    }
+    if(n.nodeValue.includes('박성웅')){
+      n.nodeValue=n.nodeValue.replace(/박성웅/g,cfg.p2);
+    }
+  }
+  // title도 교체
+  document.title = document.title.replace(/대구사업소|한국마사회시설관리 대구사업소|KRA 대구지사 빌딩/g, cfg.org);
+}
+
+// 설정 버튼 추가
+function addSettingBtn(){
+  const cfg=getOrg();
+  const btn=document.createElement('button');
+  btn.innerHTML='⚙ '+cfg.org;
+  btn.style.cssText='position:fixed;bottom:20px;right:20px;background:#1F4E79;color:#fff;border:none;padding:10px 16px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+  btn.onclick=()=>{ localStorage.removeItem('fm_org'); location.reload(); };
+  btn.title='클릭하면 사업소 설정 재입력';
+  document.body.appendChild(btn);
+  // 이름 적용
+  applyOrgName(cfg);
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  const cfg = getOrg();
+  if(cfg.org !== '우리 사업소'){
+    applyOrgName(cfg);
+    addSettingBtn();
+  } else {
+    showOrgSetup();
+  }
+});
+</script>
+</head>
+<body>
+
+<header class="header">
+  <span style="font-size:18px">🏢</span>
+  <span class="header-logo">한국마사회시설관리 대구사업소</span>
+  <span class="header-badge">통합관리</span>
+  <div class="header-right">
+    <div class="api-key-wrap">
+      <label>🤖 AI 모드</label>
+      <select id="aiMode" onchange="toggleAIMode()" style="font-size:12px;padding:3px 8px;border:1px solid rgba(255,255,255,.3);border-radius:5px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer">
+        <option value="template">📋 템플릿 모드 (API 불필요)</option>
+        <option value="api">✨ AI 모드 (API 필요)</option>
+      </select>
+    </div>
+    <div id="apiKeyWrap" style="display:none" class="api-key-wrap">
+      <label>API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-...">
+    </div>
+    <span class="today-info" id="todayInfo"></span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- 사이드바 -->
+  <nav class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">메인</div>
+      <button class="nav-item active" onclick="goPage('dashboard')"><span class="icon">📊</span>대시보드</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">시설관리</div>
+      <button class="nav-item" onclick="goPage('facility')"><span class="icon">🏗</span>시설현황</button>
+      <button class="nav-item" onclick="goPage('inspect')"><span class="icon">🔍</span>점검이력</button>
+      <button class="nav-item" onclick="goPage('repair')"><span class="icon">🔧</span>보수유지</button>
+      <button class="nav-item" onclick="goPage('safety')"><span class="icon">🚨</span>안전점검</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">운영관리</div>
+      <button class="nav-item" onclick="goPage('complaint')"><span class="icon">📢</span>민원관리</button>
+      <button class="nav-item" onclick="goPage('cost')"><span class="icon">💰</span>비용관리</button>
+      <button class="nav-item" onclick="goPage('schedule')"><span class="icon">📅</span>점검일정</button>
+      <button class="nav-item" onclick="goPage('vendor')"><span class="icon">👥</span>업체관리</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">AI 도구</div>
+      <button class="nav-item" onclick="goPage('aidoc')"><span class="icon">📝</span>문서 자동생성</button>
+      <button class="nav-item" onclick="goPage('aianalysis')"><span class="icon">📈</span>AI 분석</button>
+    </div>
+  </nav>
+
+  <!-- 메인 콘텐츠 -->
+  <main class="main">
+
+    <!-- 대시보드 -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">📊 시설관리 대시보드
+        <span style="font-size:12px;font-weight:400;color:var(--gray3);margin-left:auto">최종 업데이트: 2026년 7월 4일</span>
+      </div>
+
+      <div class="alert alert-warn">⚠️ <strong>D-28</strong> 냉각탑 수질관리 점검 예정 (2026.07.31) — 위생검사원 일정 확인 필요</div>
+      <div class="alert alert-danger">🚨 <strong>미처리 민원</strong> 1건 — 8층 복도 형광등 불량 (2026.03.10 접수, 처리 지연)</div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">이번 달 점검</div><div class="kpi-value">6</div><div class="kpi-sub">건 (전월 5건)</div></div>
+        <div class="kpi-card"><div class="kpi-label">보수 건수</div><div class="kpi-value">2</div><div class="kpi-sub">건 처리중 포함</div></div>
+        <div class="kpi-card warn"><div class="kpi-label">미처리 민원</div><div class="kpi-value">1</div><div class="kpi-sub">건 (즉시 조치 필요)</div></div>
+        <div class="kpi-card ok"><div class="kpi-label">안전점검 완료율</div><div class="kpi-value">87%</div><div class="kpi-sub">법정 6/10건</div></div>
+        <div class="kpi-card ok"><div class="kpi-label">시설 가동률</div><div class="kpi-value">97%</div><div class="kpi-sub">정상 가동 중</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <!-- 이번 달 예정 점검 -->
+        <div class="card">
+          <div class="card-header">📋 이번 달 예정 점검 (7월)</div>
+          <div class="card-body">
+            <table><thead><tr><th>점검항목</th><th>예정일</th><th>업체</th><th>상태</th></tr></thead>
+            <tbody>
+              <tr><td>승강기 월간점검</td><td>07.07</td><td>엘리텍</td><td><span class="badge badge-warn">예정</span></td></tr>
+              <tr><td>에너지 사용량 점검</td><td>07.10</td><td>자체</td><td><span class="badge badge-warn">예정</span></td></tr>
+              <tr><td>전기 절연저항 측정</td><td>07.15</td><td>자체</td><td><span class="badge badge-warn">예정</span></td></tr>
+              <tr><td>CCTV 분기점검</td><td>07.20</td><td>보안테크</td><td><span class="badge badge-warn">예정</span></td></tr>
+              <tr><td>냉각탑 수질관리</td><td>07.31</td><td>위생검사원</td><td><span class="badge badge-danger">D-28</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+        <!-- 설비 상태 현황 -->
+        <div class="card">
+          <div class="card-header">🏗 주요 설비 상태 현황</div>
+          <div class="card-body">
+            <table><thead><tr><th>설비명</th><th>위치</th><th>상태</th><th>다음점검</th></tr></thead>
+            <tbody>
+              <tr><td><span class="dot dot-ok"></span>소방펌프</td><td>기계실</td><td><span class="badge badge-ok">정상</span></td><td>2026.10</td></tr>
+              <tr><td><span class="dot dot-ok"></span>수변전설비</td><td>전기실</td><td><span class="badge badge-ok">정상</span></td><td>2026.12</td></tr>
+              <tr><td><span class="dot dot-ok"></span>비상발전기</td><td>발전기실</td><td><span class="badge badge-ok">정상</span></td><td>2026.11</td></tr>
+              <tr><td><span class="dot dot-ok"></span>엘리베이터</td><td>전층</td><td><span class="badge badge-ok">정상</span></td><td>2026.07</td></tr>
+              <tr><td><span class="dot dot-warn"></span>공조기(중앙)</td><td>기계실</td><td><span class="badge badge-warn">필터교체예정</span></td><td>2026.08</td></tr>
+              <tr><td><span class="dot dot-ok"></span>냉각탑</td><td>옥상</td><td><span class="badge badge-ok">정상</span></td><td>2026.07</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 월별 비용 추이 -->
+      <div class="card">
+        <div class="card-header">💰 월별 비용 현황 (2026년 누적)</div>
+        <div class="card-body">
+          <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px">
+            <div><span style="font-size:12px;color:var(--gray3)">연간 예산</span><br><strong style="font-size:18px;color:var(--navy)">1억 5,240만원</strong></div>
+            <div><span style="font-size:12px;color:var(--gray3)">누적 집행</span><br><strong style="font-size:18px;color:var(--green)">1억 4,571만원</strong></div>
+            <div><span style="font-size:12px;color:var(--gray3)">집행률</span><br><strong style="font-size:18px;color:var(--navy)">95.6%</strong></div>
+          </div>
+          <div class="cost-bar-wrap" id="costBars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 시설현황 -->
+    <div id="page-facility" class="page">
+      <div class="page-title">🏗 시설현황 — 설비 목록</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="aiAnalyzeFacility()">🤖 AI 설비 상태 분석</button>
+        <button class="btn btn-secondary">+ 설비 추가</button>
+      </div>
+      <div class="card">
+        <div class="card-header">주요 설비 목록 (12개)</div>
+        <div class="card-body tbl-wrap">
+          <table><thead><tr><th>No</th><th>설비명</th><th>분류</th><th>설치위치</th><th>내용연수</th><th>교체예정일</th><th>상태</th><th>담당업체</th><th>관리</th></tr></thead>
+          <tbody id="facilityTbl"></tbody></table>
+        </div>
+      </div>
+      <div id="facilityAI" class="ai-result" style="display:none"></div>
+    </div>
+
+    <!-- 점검이력 -->
+    <div id="page-inspect" class="page">
+      <div class="page-title">🔍 점검이력 관리</div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'inspTab','inspList')">점검 목록</button>
+        <button class="tab" onclick="switchTab(this,'inspTab','inspNew')">신규 등록</button>
+      </div>
+      <div id="inspList" class="inspTab">
+        <div class="btn-row">
+          <select id="inspFilter" onchange="renderInspect()" style="width:140px">
+            <option value="">전체 유형</option>
+            <option>정기점검</option><option>비정기점검</option><option>법정점검</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="aiInspectSummary()">🤖 AI 점검 요약</button>
+        </div>
+        <div class="card"><div class="card-body tbl-wrap">
+          <table><thead><tr><th>No</th><th>점검일자</th><th>유형</th><th>분류</th><th>점검항목</th><th>위치</th><th>점검자</th><th>결과</th><th>조치사항</th><th>다음점검</th></tr></thead>
+          <tbody id="inspectTbl"></tbody></table>
+        </div></div>
+        <div id="inspAI" class="ai-result" style="display:none"></div>
+      </div>
+      <div id="inspNew" class="inspTab" style="display:none">
+        <div class="card"><div class="card-body">
+          <div class="form-grid col3">
+            <div class="form-group"><label class="lbl">점검일자</label><input type="date" id="nInspDate"></div>
+            <div class="form-group"><label class="lbl">점검유형</label><select id="nInspType"><option>정기점검</option><option>비정기점검</option><option>법정점검</option></select></div>
+            <div class="form-group"><label class="lbl">점검분류</label><select id="nInspCat"><option>소방설비</option><option>전기설비</option><option>공조설비</option><option>승강기</option><option>급배수</option><option>가스설비</option><option>보안설비</option><option>건축/구조</option></select></div>
+          </div>
+          <div class="form-grid col3">
+            <div class="form-group"><label class="lbl">점검항목</label><input type="text" id="nInspItem" placeholder="예) 소화기 점검"></div>
+            <div class="form-group"><label class="lbl">점검위치</label><input type="text" id="nInspLoc" placeholder="예) 전층, B2F 전기실"></div>
+            <div class="form-group"><label class="lbl">점검자</label><input type="text" id="nInspPerson" placeholder="점검자 이름"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label class="lbl">점검결과</label><select id="nInspResult"><option>양호</option><option>완료</option><option>이상</option><option>보류</option></select></div>
+            <div class="form-group"><label class="lbl">다음점검예정일</label><input type="date" id="nInspNext"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px"><label class="lbl">조치사항/특이사항</label><textarea id="nInspNote" placeholder="점검 중 발견된 이상사항 및 조치 내용을 입력하세요"></textarea></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="addInspect()">✅ 점검 등록</button>
+            <button class="btn btn-secondary" onclick="aiGenInspNote()">🤖 AI 조치사항 자동완성</button>
+          </div>
+          <div id="inspNewAI" class="ai-result" style="display:none"></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 보수유지 -->
+    <div id="page-repair" class="page">
+      <div class="page-title">🔧 보수유지 이력</div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'repTab','repList')">보수 목록</button>
+        <button class="tab" onclick="switchTab(this,'repTab','repNew')">신규 등록</button>
+      </div>
+      <div id="repList" class="repTab">
+        <div class="card"><div class="card-body tbl-wrap">
+          <table><thead><tr><th>No</th><th>접수일</th><th>작업일</th><th>유형</th><th>설비/위치</th><th>작업내용</th><th>업체</th><th>자재비</th><th>인건비</th><th>합계</th><th>상태</th></tr></thead>
+          <tbody id="repairTbl"></tbody></table>
+        </div></div>
+        <div style="padding:10px 0;font-size:13px;color:var(--text2)">
+          <strong>누적 보수비용:</strong> <span id="repTotal" style="color:var(--navy);font-weight:700"></span>
+        </div>
+      </div>
+      <div id="repNew" class="repTab" style="display:none">
+        <div class="card"><div class="card-body">
+          <div class="form-grid col3">
+            <div class="form-group"><label class="lbl">접수일자</label><input type="date" id="nRepDate"></div>
+            <div class="form-group"><label class="lbl">작업유형</label><select id="nRepType"><option>수리</option><option>교체</option><option>보수</option><option>청소</option></select></div>
+            <div class="form-group"><label class="lbl">설비명/위치</label><input type="text" id="nRepEquip" placeholder="예) 1호 엘리베이터"></div>
+          </div>
+          <div class="form-grid col1">
+            <div class="form-group"><label class="lbl">작업내용</label><textarea id="nRepContent" placeholder="작업 상세 내용"></textarea></div>
+          </div>
+          <div class="form-grid col3">
+            <div class="form-group"><label class="lbl">작업업체</label><input type="text" id="nRepVendor"></div>
+            <div class="form-group"><label class="lbl">자재비(원)</label><input type="number" id="nRepMat" placeholder="0"></div>
+            <div class="form-group"><label class="lbl">인건비(원)</label><input type="number" id="nRepLabor" placeholder="0"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="addRepair()">✅ 보수 등록</button>
+            <button class="btn btn-secondary" onclick="aiRepairReport()">🤖 AI 보수보고서 초안</button>
+          </div>
+          <div id="repNewAI" class="ai-result" style="display:none"></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 안전점검 -->
+    <div id="page-safety" class="page">
+      <div class="page-title">🚨 법정 안전점검 관리</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="aiSafetyCheck()">🤖 AI 법정점검 현황 분석</button>
+      </div>
+      <div class="card"><div class="card-body tbl-wrap">
+        <table><thead><tr><th>점검구분</th><th>법정근거</th><th>주기</th><th>최근점검일</th><th>다음점검일</th><th>D-Day</th><th>결과</th><th>점검기관</th><th>지적사항</th><th>제출기관</th></tr></thead>
+        <tbody id="safetyTbl"></tbody></table>
+      </div></div>
+      <div id="safetyAI" class="ai-result" style="display:none"></div>
+    </div>
+
+    <!-- 민원관리 -->
+    <div id="page-complaint" class="page">
+      <div class="page-title">📢 민원 관리</div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'cmpTab','cmpList')">민원 목록</button>
+        <button class="tab" onclick="switchTab(this,'cmpTab','cmpNew')">민원 접수</button>
+      </div>
+      <div id="cmpList" class="cmpTab">
+        <div class="card"><div class="card-body tbl-wrap">
+          <table><thead><tr><th>접수번호</th><th>접수일시</th><th>민원인</th><th>위치</th><th>유형</th><th>내용</th><th>담당자</th><th>상태</th><th>처리일시</th><th>만족도</th><th>답변초안</th></tr></thead>
+          <tbody id="complaintTbl"></tbody></table>
+        </div></div>
+      </div>
+      <div id="cmpNew" class="cmpTab" style="display:none">
+        <div class="card"><div class="card-body">
+          <div class="form-grid col3">
+            <div class="form-group"><label class="lbl">민원인</label><input type="text" id="nCmpPerson" placeholder="성명"></div>
+            <div class="form-group"><label class="lbl">위치(층/호)</label><input type="text" id="nCmpLoc" placeholder="예) 3층 305"></div>
+            <div class="form-group"><label class="lbl">민원유형</label><select id="nCmpType"><option>시설하자</option><option>환경</option><option>주차</option><option>안전</option><option>기타</option></select></div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px"><label class="lbl">민원 내용</label><textarea id="nCmpContent" placeholder="민원 내용을 상세히 입력하세요"></textarea></div>
+          <div class="form-grid">
+            <div class="form-group"><label class="lbl">배정 담당자</label><input type="text" id="nCmpAssign" placeholder="담당자 이름"></div>
+            <div class="form-group"><label class="lbl">처리 목표일</label><input type="date" id="nCmpDue"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="addComplaint()">✅ 민원 접수</button>
+            <button class="btn btn-secondary" onclick="aiComplaintReply()">🤖 AI 민원 답변 초안</button>
+          </div>
+          <div id="cmpNewAI" class="ai-result" style="display:none"></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 비용관리 -->
+    <div id="page-cost" class="page">
+      <div class="page-title">💰 비용 관리</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="kpi-card"><div class="kpi-label">연간 예산</div><div class="kpi-value" style="font-size:20px">1억 5,240만</div></div>
+        <div class="kpi-card ok"><div class="kpi-label">누적 집행</div><div class="kpi-value" style="font-size:20px">1억 4,571만</div></div>
+        <div class="kpi-card"><div class="kpi-label">집행률</div><div class="kpi-value">95.6%</div><div class="kpi-sub">잔여 669만원</div></div>
+      </div>
+      <div class="card"><div class="card-body tbl-wrap">
+        <table><thead><tr><th>항목</th><th>분류</th><th>연간예산</th><th>1월</th><th>2월</th><th>3월</th><th>4월</th><th>5월</th><th>6월</th><th>7월</th><th>합계</th><th>집행률</th></tr></thead>
+        <tbody id="costTbl"></tbody></table>
+      </div></div>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn btn-primary" onclick="aiCostAnalysis()">🤖 AI 비용 절감 분석</button>
+      </div>
+      <div id="costAI" class="ai-result" style="display:none"></div>
+    </div>
+
+    <!-- 점검일정 -->
+    <div id="page-schedule" class="page">
+      <div class="page-title">📅 연간 점검 계획표 (2026)</div>
+      <div style="display:flex;gap:12px;margin-bottom:8px;font-size:12px;align-items:center">
+        <span style="background:var(--navy3);color:var(--navy);padding:2px 8px;border-radius:3px;font-weight:600">◎ 완료</span>
+        <span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:3px;font-weight:600">● 계획</span>
+        <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:3px;font-weight:600">✗ 미실시</span>
+        <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:3px;font-weight:600">법정</span>
+      </div>
+      <div class="card"><div class="card-body tbl-wrap">
+        <table id="scheduleTbl" style="min-width:900px"><thead><tr>
+          <th style="min-width:160px">점검항목</th><th>분류</th><th>주기</th><th>법정</th>
+          <th>1월</th><th>2월</th><th>3월</th><th>4월</th><th>5월</th><th>6월</th>
+          <th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th>
+        </tr></thead><tbody id="scheduleBody"></tbody></table>
+      </div></div>
+    </div>
+
+    <!-- 업체관리 -->
+    <div id="page-vendor" class="page">
+      <div class="page-title">👥 협력업체 관리</div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+        <div class="card"><div class="card-body tbl-wrap">
+          <table><thead><tr><th>No</th><th>업체명</th><th>분야</th><th>대표자</th><th>담당자</th><th>연락처</th><th>계약기간</th><th>계약금액</th><th>비고</th></tr></thead>
+          <tbody id="vendorTbl"></tbody></table>
+        </div></div>
+        <div>
+          <div class="card"><div class="card-header">🚨 긴급 연락처</div><div class="card-body">
+            <table><thead><tr><th>구분</th><th>연락처</th><th>담당</th></tr></thead>
+            <tbody>
+              <tr><td>소방서</td><td><strong>119</strong></td><td>화재/구조</td></tr>
+              <tr><td>경찰서</td><td><strong>112</strong></td><td>범죄/긴급</td></tr>
+              <tr><td>한국전력</td><td><strong>123</strong></td><td>정전/긴급</td></tr>
+              <tr><td>도시가스</td><td>031-XXX-XXXX</td><td>가스누출</td></tr>
+              <tr><td>건물 긴급</td><td>010-XXX-XXXX</td><td>야간/휴일</td></tr>
+            </tbody></table>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI 문서 자동생성 -->
+    <div id="page-aidoc" class="page">
+      <div class="page-title">📝 AI 안전서류 자동생성</div>
+      <div class="card"><div class="card-body">
+        <div class="form-grid">
+          <div class="form-group"><label class="lbl">작업명 *</label><input type="text" id="docWorkName" placeholder="예) 공조기 미디엄필터 교체 작업"></div>
+          <div class="form-group"><label class="lbl">작업일시</label><input type="date" id="docDate"></div>
+          <div class="form-group"><label class="lbl">작업장소</label><input type="text" id="docPlace" placeholder="예) 공조기실, B2F 전기실"></div>
+          <div class="form-group"><label class="lbl">작업업체</label><input type="text" id="docVendor" placeholder="예) 전기안전공사"></div>
+          <div class="form-group"><label class="lbl">기간/인원</label><input type="text" id="docPeriod" placeholder="예) 1일 / 2명"></div>
+          <div class="form-group"><label class="lbl">작업분류</label><select id="docType">
+            <option>전기</option><option>기계·설비</option><option>외벽·방수</option>
+            <option>소방</option><option>고소작업</option><option>배관·위생</option><option>기타</option>
+          </select></div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label class="lbl">특이사항/추가정보</label><textarea id="docNote" placeholder="위험요인, 사용장비, 특이사항 등 입력하면 더 정확한 문서가 생성됩니다."></textarea></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="genRisk()">⚠️ 위험성평가표 생성</button>
+          <button class="btn btn-secondary" onclick="genTBM()">📋 TBM 일지 생성</button>
+          <button class="btn btn-success" onclick="genReport()">✅ 작업완료보고서 생성</button>
+        </div>
+      </div></div>
+      <div class="tabs" style="margin-top:10px">
+        <button class="tab active" onclick="switchTab(this,'docTab','docRisk')">위험성평가표</button>
+        <button class="tab" onclick="switchTab(this,'docTab','docTBM')">TBM 일지</button>
+        <button class="tab" onclick="switchTab(this,'docTab','docReport')">작업완료보고서</button>
+      </div>
+      <div id="docRisk" class="docTab"><div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="btn btn-secondary btn-sm" onclick="copyDoc('docRiskContent')">📄 복사</button></div><div id="docRiskContent" class="ai-result">위험성평가표가 여기에 생성됩니다.</div></div>
+      <div id="docTBM" class="docTab" style="display:none"><div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="btn btn-secondary btn-sm" onclick="copyDoc('docTBMContent')">📄 복사</button></div><div id="docTBMContent" class="ai-result">TBM 일지가 여기에 생성됩니다.</div></div>
+      <div id="docReport" class="docTab" style="display:none"><div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="btn btn-secondary btn-sm" onclick="copyDoc('docReportContent')">📄 복사</button></div><div id="docReportContent" class="ai-result">작업완료보고서가 여기에 생성됩니다.</div></div>
+    </div>
+
+    <!-- AI 분석 -->
+    <div id="page-aianalysis" class="page">
+      <div class="page-title">📈 AI 시설 종합 분석</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="card"><div class="card-body">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:10px">현재 시설 데이터를 기반으로 AI가 종합 분석합니다.</p>
+          <div class="btn-row" style="flex-direction:column">
+            <button class="btn btn-primary" onclick="aiComprehensive()">🤖 종합 시설 현황 분석</button>
+            <button class="btn btn-secondary" onclick="aiRisk()">⚠️ 위험 요소 조기 경보</button>
+            <button class="btn btn-secondary" onclick="aiMaintPlan()">📅 예방보수 계획 제안</button>
+            <button class="btn btn-secondary" onclick="aiCostSave()">💰 비용 절감 방안</button>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <div class="stat-title" style="margin-bottom:8px">설비 분류별 현황</div>
+          <div id="statBars"></div>
+        </div></div>
+      </div>
+      <div id="aiAnalysisResult" class="ai-result" style="min-height:200px">AI 분석 결과가 여기에 표시됩니다.</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── 데이터 ──────────────────────────────────────────────
+const DATA = {
+  facilities:[
+    {no:1,name:"소방펌프",cat:"소방설비",loc:"기계실",life:20,nextReplace:"2032-01",status:"정상",vendor:"소방안전(주)"},
+    {no:2,name:"스프링클러",cat:"소방설비",loc:"전층",life:20,nextReplace:"2032-01",status:"정상",vendor:"소방안전(주)"},
+    {no:3,name:"비상발전기",cat:"전기설비",loc:"발전기실",life:20,nextReplace:"2033-01",status:"정상",vendor:"한국전기안전"},
+    {no:4,name:"수변전설비",cat:"전기설비",loc:"전기실",life:20,nextReplace:"2033-01",status:"정상",vendor:"한국전기안전"},
+    {no:5,name:"엘리베이터",cat:"승강기",loc:"전층",life:15,nextReplace:"2028-01",status:"정상",vendor:"엘리텍(주)"},
+    {no:6,name:"냉방기(중앙)",cat:"공조설비",loc:"기계실",life:15,nextReplace:"2029-01",status:"필터교체필요",vendor:"공조테크"},
+    {no:7,name:"난방보일러",cat:"공조설비",loc:"기계실",life:15,nextReplace:"2029-01",status:"정상",vendor:"공조테크"},
+    {no:8,name:"급수펌프",cat:"급배수",loc:"기계실",life:15,nextReplace:"2028-06",status:"정상",vendor:"-"},
+    {no:9,name:"오배수펌프",cat:"급배수",loc:"기계실",life:15,nextReplace:"2028-06",status:"정상",vendor:"-"},
+    {no:10,name:"CCTV시스템",cat:"보안설비",loc:"관리실",life:10,nextReplace:"2027-01",status:"정상",vendor:"보안테크"},
+    {no:11,name:"가스차단기",cat:"가스설비",loc:"가스실",life:10,nextReplace:"2026-12",status:"정상",vendor:"도시가스"},
+    {no:12,name:"주차관리시스템",cat:"주차설비",loc:"주차장",life:10,nextReplace:"2027-06",status:"정상",vendor:"-"},
+  ],
+  inspections:[
+    {no:1,date:"2026-01-05",type:"정기점검",cat:"소방설비",item:"소화기 점검",loc:"전층",person:"김철수",org:"자체",result:"양호",action:"이상없음",next:"2026-04-05"},
+    {no:2,date:"2026-01-10",type:"정기점검",cat:"전기설비",item:"배전반 점검",loc:"전기실",person:"이영희",org:"한국전기",result:"양호",action:"누전차단기 교체필요",next:"2026-04-10"},
+    {no:3,date:"2026-01-15",type:"비정기점검",cat:"승강기",item:"승강기 오작동",loc:"1호기",person:"엘리텍",org:"엘리텍",result:"이상",action:"버튼 교체 완료",next:"2026-02-15"},
+    {no:4,date:"2026-02-04",type:"법정점검",cat:"소방설비",item:"소방시설 종합점검",loc:"전층",person:"소방안전",org:"소방안전(주)",result:"양호",action:"스프링클러 헤드 3개 교체",next:"2027-02-04"},
+    {no:5,date:"2026-02-15",type:"정기점검",cat:"공조설비",item:"냉난방기 필터 교체",loc:"기계실",person:"박민준",org:"공조테크",result:"완료",action:"필터 전량 교체",next:"2026-05-15"},
+  ],
+  repairs:[
+    {no:1,rcvDate:"2026-01-16",workDate:"2026-01-16",type:"수리",equip:"1호 엘리베이터 버튼",content:"1층 버튼 교체 작업",vendor:"엘리텍(주)",mat:150000,labor:80000,status:"완료"},
+    {no:2,rcvDate:"2026-01-20",workDate:"2026-01-22",type:"교체",equip:"B1 배전반 누전차단기",content:"20A 누전차단기 2개 교체",vendor:"한국전기(주)",mat:45000,labor:120000,status:"완료"},
+    {no:3,rcvDate:"2026-02-10",workDate:"2026-02-10",type:"교체",equip:"스프링클러 헤드",content:"헤드 3개 교체(B동 3층)",vendor:"소방안전(주)",mat:90000,labor:150000,status:"완료"},
+    {no:4,rcvDate:"2026-02-15",workDate:"2026-02-15",type:"교체",equip:"공조기 필터",content:"에어필터 전량 교체",vendor:"공조테크(주)",mat:320000,labor:200000,status:"완료"},
+    {no:5,rcvDate:"2026-03-05",workDate:"2026-03-08",type:"수리",equip:"옥상 방수",content:"균열부 보수 방수작업",vendor:"방수전문업체",mat:800000,labor:500000,status:"완료"},
+  ],
+  safety:[
+    {name:"소방시설 종합점검",basis:"화재예방법 제22조",cycle:"1년",last:"2026-02-04",next:"2027-02-04",result:"완료",org:"소방안전(주)",issue:"없음",submit:"소방서"},
+    {name:"소방시설 작동점검",basis:"화재예방법 제22조",cycle:"1년",last:"2025-08-10",next:"2026-08-10",result:"완료",org:"소방안전(주)",issue:"소화기 3개 교체",submit:"소방서"},
+    {name:"전기안전점검",basis:"전기사업법 제63조",cycle:"1년",last:"2025-12-15",next:"2026-12-15",result:"완료",org:"한국전기안전",issue:"배선 절연 이상 1건",submit:"산업부"},
+    {name:"가스안전점검",basis:"도시가스사업법",cycle:"1년",last:"2026-01-20",next:"2027-01-20",result:"완료",org:"도시가스",issue:"이상없음",submit:"가스공사"},
+    {name:"승강기 정기검사",basis:"승강기안전관리법",cycle:"1년",last:"2025-11-05",next:"2026-11-05",result:"완료",org:"한국승강기",issue:"없음",submit:"행안부"},
+    {name:"건축물 정기점검",basis:"건축법 제35조",cycle:"2년",last:"2025-06-10",next:"2027-06-10",result:"완료",org:"건축안전원",issue:"외벽 균열 보수",submit:"시청"},
+    {name:"냉각탑 수질관리",basis:"공중위생법",cycle:"분기",last:"2026-02-28",next:"2026-07-31",result:"예정",org:"위생검사원",issue:"-",submit:"구청"},
+    {name:"지하수 수질검사",basis:"지하수법",cycle:"반기",last:"2025-11-10",next:"2026-05-10",result:"완료",org:"수질검사소",issue:"이상없음",submit:"환경부"},
+    {name:"에너지 진단",basis:"에너지이용합리화법",cycle:"5년",last:"2023-07-20",next:"2028-07-20",result:"완료",org:"에너지공단",issue:"LED교체 권고",submit:"산업부"},
+  ],
+  complaints:[
+    {no:"MC-2601-001",date:"2026-01-08 09:30",person:"홍길동",loc:"3층 305",type:"시설하자",content:"화장실 수도꼭지 누수",assign:"김설비",status:"처리완료",done:"2026-01-08 14:00",sat:"★★★★★"},
+    {no:"MC-2601-002",date:"2026-01-15 14:20",person:"박영수",loc:"5층 501",type:"환경",content:"사무실 냉방 불량",assign:"공조팀",status:"처리완료",done:"2026-01-15 17:00",sat:"★★★★☆"},
+    {no:"MC-2602-001",date:"2026-02-03 10:00",person:"이순신",loc:"주차장",type:"주차",content:"주차 선 훼손",assign:"시설팀",status:"처리완료",done:"2026-02-05 16:00",sat:"★★★☆☆"},
+    {no:"MC-2602-002",date:"2026-02-20 09:00",person:"김민지",loc:"1층 로비",type:"안전",content:"출입문 자동문 오작동",assign:"전기팀",status:"처리완료",done:"2026-02-20 11:30",sat:"★★★★★"},
+    {no:"MC-2603-001",date:"2026-03-10 15:30",person:"최우석",loc:"8층",type:"기타",content:"복도 형광등 불량",assign:"시설팀",status:"미처리",done:"-",sat:"-"},
+  ],
+  costs:[
+    {item:"정기점검비",cat:"점검",budget:2400000,m:[200000,200000,200000,200000,200000,200000,200000]},
+    {item:"소방점검비",cat:"점검",budget:1200000,m:[100000,100000,100000,100000,100000,100000,100000]},
+    {item:"전기안전점검",cat:"점검",budget:800000,m:[0,0,0,0,0,800000,0]},
+    {item:"승강기유지비",cat:"유지보수",budget:3600000,m:[300000,300000,300000,300000,300000,300000,300000]},
+    {item:"공조기유지비",cat:"유지보수",budget:2400000,m:[200000,200000,200000,200000,200000,200000,200000]},
+    {item:"청소용역비",cat:"청소",budget:24000000,m:[2000000,2000000,2000000,2000000,2000000,2000000,2000000]},
+    {item:"경비용역비",cat:"보안",budget:36000000,m:[3000000,3000000,3000000,3000000,3000000,3000000,3000000]},
+    {item:"전기요금",cat:"공과금",budget:48000000,m:[3500000,3200000,3800000,3600000,4200000,4500000,4800000]},
+    {item:"가스요금",cat:"공과금",budget:12000000,m:[1800000,1600000,1200000,500000,300000,200000,200000]},
+    {item:"수도요금",cat:"공과금",budget:6000000,m:[500000,480000,500000,480000,510000,520000,540000]},
+  ],
+  schedule:[
+    {name:"소방시설 종합점검",cat:"소방",cycle:"연1회",legal:true,m:["","◎","","","","","","","","","",""]},
+    {name:"소방시설 작동점검",cat:"소방",cycle:"연1회",legal:true,m:["","","","","","","","●","","","",""]},
+    {name:"소화기 점검",cat:"소방",cycle:"분기",legal:false,m:["◎","","","◎","","","●","","","●","",""]},
+    {name:"전기안전점검",cat:"전기",cycle:"연1회",legal:true,m:["","","","","","◎","","","","","",""]},
+    {name:"전기 절연저항",cat:"전기",cycle:"반기",legal:false,m:["","◎","","","","","◎","","","","",""]},
+    {name:"승강기 정기검사",cat:"승강기",cycle:"연1회",legal:true,m:["","","","","","","","","","◎","",""]},
+    {name:"승강기 월간점검",cat:"승강기",cycle:"월1회",legal:false,m:["◎","◎","◎","◎","◎","●","●","●","●","●","●",""]},
+    {name:"공조기 필터 교체",cat:"공조",cycle:"분기",legal:false,m:["","◎","","","●","","","●","","","●",""]},
+    {name:"냉방기 시운전",cat:"공조",cycle:"연1회",legal:false,m:["","","","◎","","","","","","","",""]},
+    {name:"난방기 시운전",cat:"공조",cycle:"연1회",legal:false,m:["","","","","","","","","","◎","",""]},
+    {name:"가스안전점검",cat:"가스",cycle:"연1회",legal:true,m:["◎","","","","","","","","","","",""]},
+    {name:"급배수 청소",cat:"급배수",cycle:"반기",legal:false,m:["◎","","","","","","◎","","","","",""]},
+    {name:"냉각탑 청소",cat:"급배수",cycle:"분기",legal:false,m:["","","◎","","","◎","","","◎","","",""]},
+    {name:"외벽/옥상 점검",cat:"건축",cycle:"반기",legal:false,m:["","","◎","","","","","","◎","","",""]},
+    {name:"CCTV 점검",cat:"보안",cycle:"분기",legal:false,m:["◎","","","◎","","","◎","","","◎","",""]},
+    {name:"에너지 사용량",cat:"에너지",cycle:"월1회",legal:false,m:["◎","◎","◎","◎","◎","●","●","●","●","●","●",""]},
+  ],
+  vendors:[
+    {no:1,name:"소방안전(주)",field:"소방설비",ceo:"홍대표",person:"김담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:3600000,note:"연간계약"},
+    {no:2,name:"한국전기안전",field:"전기설비",ceo:"이대표",person:"박담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:2400000,note:"연간계약"},
+    {no:3,name:"엘리텍(주)",field:"승강기",ceo:"최대표",person:"김담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:4800000,note:"월정액"},
+    {no:4,name:"공조테크",field:"공조설비",ceo:"박대표",person:"이담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:2400000,note:"연간계약"},
+    {no:5,name:"도시가스",field:"가스설비",ceo:"김대표",person:"최담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:800000,note:"연간계약"},
+    {no:6,name:"보안테크",field:"보안/CCTV",ceo:"이대표",person:"박담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:1200000,note:"연간계약"},
+    {no:7,name:"청결용역",field:"청소",ceo:"정대표",person:"김담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:24000000,note:"월정액"},
+    {no:8,name:"방범경비",field:"경비/보안",ceo:"송대표",person:"이담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:36000000,note:"월정액"},
+    {no:9,name:"방수전문",field:"방수/건축",ceo:"오대표",person:"최담당",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:0,note:"필요시"},
+    {no:10,name:"승강기관리원",field:"승강기검사",ceo:"관리원",person:"검사원",tel:"053-XXX-XXXX",start:"2026-01-01",end:"2026-12-31",fee:200000,note:"법정검사"},
+  ]
+};
+
+// ── 초기화 ──────────────────────────────────────────────
+window.onload=()=>{
+  setToday();
+  renderAll();
+};
+
+function setToday(){
+  const d=new Date(2026,6,4);
+  document.getElementById('todayInfo').textContent=`2026년 7월 4일 (토)`;
+  const di=document.getElementById('docDate');
+  if(di) di.value='2026-07-04';
+  const ni=document.getElementById('nInspDate');
+  if(ni) ni.value='2026-07-04';
+  const nr=document.getElementById('nRepDate');
+  if(nr) nr.value='2026-07-04';
+}
+
+function renderAll(){
+  renderFacility();renderInspect();renderRepair();renderSafety();
+  renderComplaint();renderCost();renderSchedule();renderVendor();
+  renderCostBars();renderStatBars();
+}
+
+// ── 네비게이션 ──
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')===`goPage('${id}')`) n.classList.add('active');
+  });
+}
+
+function switchTab(btn,groupClass,targetId){
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.'+groupClass).forEach(el=>el.style.display='none');
+  document.getElementById(targetId).style.display='block';
+}
+
+// ── 렌더링 ──────────────────────────────────────────────
+function fmt(n){return n.toLocaleString()+'원';}
+function badge(s){
+  const m={정상:'ok',양호:'ok',완료:'ok',처리완료:'ok',이상:'danger',미처리:'danger',예정:'warn',필터교체필요:'warn',처리중:'warn'};
+  return `<span class="badge badge-${m[s]||'gray'}">${s}</span>`;
+}
+function dday(dateStr){
+  const t=new Date(2026,6,4);
+  const d=new Date(dateStr);
+  const diff=Math.ceil((d-t)/(1000*60*60*24));
+  if(diff<0) return `<span class="badge badge-ok">완료</span>`;
+  if(diff===0) return `<span class="badge badge-danger">D-Day</span>`;
+  if(diff<=30) return `<span class="badge badge-danger">D-${diff}</span>`;
+  return `<span class="badge badge-gray">D-${diff}</span>`;
+}
+
+function renderFacility(){
+  const tb=document.getElementById('facilityTbl');
+  if(!tb) return;
+  tb.innerHTML=DATA.facilities.map(f=>`<tr>
+    <td>${f.no}</td><td><strong>${f.name}</strong></td>
+    <td><span class="badge badge-navy">${f.cat}</span></td>
+    <td>${f.loc}</td><td>${f.life}년</td><td>${f.nextReplace}</td>
+    <td>${badge(f.status)}</td><td>${f.vendor}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="aiEquipDetail('${f.name}','${f.cat}','${f.status}')">AI분석</button></td>
+  </tr>`).join('');
+}
+
+function renderInspect(){
+  const tb=document.getElementById('inspectTbl');
+  if(!tb) return;
+  const filter=document.getElementById('inspFilter');
+  const f=filter?filter.value:'';
+  const rows=f?DATA.inspections.filter(i=>i.type===f):DATA.inspections;
+  tb.innerHTML=rows.map(i=>`<tr>
+    <td>${i.no}</td><td>${i.date}</td>
+    <td><span class="badge badge-navy">${i.type}</span></td>
+    <td>${i.cat}</td><td><strong>${i.item}</strong></td>
+    <td>${i.loc}</td><td>${i.person}</td>
+    <td>${badge(i.result)}</td><td style="font-size:12px">${i.action}</td><td>${i.next}</td>
+  </tr>`).join('');
+}
+
+function renderRepair(){
+  const tb=document.getElementById('repairTbl');
+  if(!tb) return;
+  let total=0;
+  tb.innerHTML=DATA.repairs.map(r=>{
+    const sum=r.mat+r.labor;total+=sum;
+    return `<tr>
+      <td>${r.no}</td><td>${r.rcvDate}</td><td>${r.workDate}</td>
+      <td><span class="badge badge-navy">${r.type}</span></td>
+      <td><strong>${r.equip}</strong></td><td style="font-size:12px">${r.content}</td>
+      <td>${r.vendor}</td><td>${fmt(r.mat)}</td><td>${fmt(r.labor)}</td>
+      <td><strong>${fmt(sum)}</strong></td><td>${badge(r.status)}</td>
+    </tr>`;
+  }).join('');
+  const el=document.getElementById('repTotal');
+  if(el) el.textContent=fmt(total);
+}
+
+function renderSafety(){
+  const tb=document.getElementById('safetyTbl');
+  if(!tb) return;
+  tb.innerHTML=DATA.safety.map(s=>`<tr>
+    <td><strong>${s.name}</strong></td>
+    <td style="font-size:11px;color:var(--gray3)">${s.basis}</td>
+    <td>${s.cycle}</td><td>${s.last}</td><td>${s.next}</td>
+    <td>${dday(s.next)}</td><td>${badge(s.result)}</td>
+    <td>${s.org}</td>
+    <td style="font-size:12px;color:${s.issue==='없음'||s.issue==='-'?'var(--green)':'var(--amber)'}">${s.issue}</td>
+    <td>${s.submit}</td>
+  </tr>`).join('');
+}
+
+function renderComplaint(){
+  const tb=document.getElementById('complaintTbl');
+  if(!tb) return;
+  tb.innerHTML=DATA.complaints.map(c=>`<tr>
+    <td style="font-size:11px">${c.no}</td><td style="font-size:11px">${c.date}</td>
+    <td>${c.person}</td><td>${c.loc}</td>
+    <td><span class="badge badge-navy">${c.type}</span></td>
+    <td style="font-size:12px">${c.content}</td>
+    <td>${c.assign}</td>
+    <td class="${c.status==='미처리'?'status-todo':'status-done'}">${c.status}</td>
+    <td style="font-size:11px">${c.done}</td><td>${c.sat}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="aiComplaintReplyDirect('${c.content}','${c.type}','${c.person}')">AI답변</button></td>
+  </tr>`).join('');
+}
+
+function renderCost(){
+  const tb=document.getElementById('costTbl');
+  if(!tb) return;
+  const months=['1월','2월','3월','4월','5월','6월','7월'];
+  tb.innerHTML=DATA.costs.map(c=>{
+    const sum=c.m.reduce((a,b)=>a+b,0);
+    const pct=Math.round(sum/c.budget*100);
+    const color=pct>=100?'var(--green)':pct>=80?'var(--amber)':'var(--text2)';
+    return `<tr>
+      <td><strong>${c.item}</strong></td>
+      <td><span class="badge badge-gray">${c.cat}</span></td>
+      <td style="text-align:right">${fmt(c.budget)}</td>
+      ${c.m.map(v=>`<td style="text-align:right;font-size:12px">${v?fmt(v):'-'}</td>`).join('')}
+      <td style="text-align:right;font-weight:700;color:var(--navy)">${fmt(sum)}</td>
+      <td style="text-align:right;font-weight:700;color:${color}">${pct}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSchedule(){
+  const tb=document.getElementById('scheduleBody');
+  if(!tb) return;
+  const marks={'◎':'cal-done','●':'cal-plan'};
+  tb.innerHTML=DATA.schedule.map(s=>`<tr>
+    <td><strong style="font-size:12px">${s.name}</strong></td>
+    <td><span class="badge badge-navy" style="font-size:10px">${s.cat}</span></td>
+    <td style="font-size:12px">${s.cycle}</td>
+    <td>${s.legal?'<span class="badge badge-danger" style="font-size:10px">법정</span>':'<span class="badge badge-gray" style="font-size:10px">자체</span>'}</td>
+    ${s.m.map(v=>{
+      const cls=v==='◎'?'background:#dbeafe;color:#1e40af':v==='●'?'background:#dcfce7;color:#166534':'';
+      return `<td style="text-align:center;font-size:13px;${cls}">${v||''}</td>`;
+    }).join('')}
+  </tr>`).join('');
+}
+
+function renderVendor(){
+  const tb=document.getElementById('vendorTbl');
+  if(!tb) return;
+  tb.innerHTML=DATA.vendors.map(v=>`<tr>
+    <td>${v.no}</td><td><strong>${v.name}</strong></td>
+    <td><span class="badge badge-navy">${v.field}</span></td>
+    <td>${v.ceo}</td><td>${v.person}</td>
+    <td><a href="tel:${v.tel}" style="color:var(--navy)">${v.tel}</a></td>
+    <td style="font-size:12px">${v.start} ~ ${v.end}</td>
+    <td style="text-align:right">${v.fee?fmt(v.fee):'-'}</td>
+    <td style="font-size:12px">${v.note}</td>
+  </tr>`).join('');
+}
+
+function renderCostBars(){
+  const el=document.getElementById('costBars');
+  if(!el) return;
+  const items=[
+    {label:'청소용역',val:24000000,budget:24000000},
+    {label:'경비용역',val:36000000,budget:36000000},
+    {label:'전기요금',val:47100000,budget:48000000},
+    {label:'가스요금',val:9700000,budget:12000000},
+    {label:'수도요금',val:6010000,budget:6000000},
+    {label:'승강기유지',val:3600000,budget:3600000},
+    {label:'공조기유지',val:2400000,budget:2400000},
+  ];
+  el.innerHTML=items.map(i=>{
+    const pct=Math.min(Math.round(i.val/i.budget*100),100);
+    return `<div class="cost-row">
+      <span class="cost-label">${i.label}</span>
+      <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:${pct}%"></div></div>
+      <span class="cost-val">${(i.val/10000).toFixed(0)}만/${(i.budget/10000).toFixed(0)}만 (${pct}%)</span>
+    </div>`;
+  }).join('');
+}
+
+function renderStatBars(){
+  const el=document.getElementById('statBars');
+  if(!el) return;
+  const stats=[
+    {name:'소방설비',cnt:22,cost:680},
+    {name:'전기설비',cnt:18,cost:320},
+    {name:'승강기',cnt:15,cost:580},
+    {name:'공조설비',cnt:20,cost:520},
+    {name:'급배수',cnt:10,cost:240},
+    {name:'건축/구조',cnt:6,cost:1300},
+  ];
+  const maxCnt=Math.max(...stats.map(s=>s.cnt));
+  el.innerHTML=stats.map(s=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:12px">
+    <span style="width:70px;color:var(--text2)">${s.name}</span>
+    <div style="flex:1;background:var(--gray2);border-radius:3px;height:12px">
+      <div style="width:${Math.round(s.cnt/maxCnt*100)}%;height:100%;background:var(--navy2);border-radius:3px"></div>
+    </div>
+    <span style="width:50px;color:var(--gray3)">${s.cnt}회</span>
+    <span style="width:60px;color:var(--amber)">${s.cost}만원</span>
+  </div>`).join('');
+}
+
+// ── 데이터 추가 ──────────────────────────────────────────
+function addInspect(){
+  const d=document.getElementById('nInspDate').value;
+  const t=document.getElementById('nInspType').value;
+  const cat=document.getElementById('nInspCat').value;
+  const item=document.getElementById('nInspItem').value;
+  const loc=document.getElementById('nInspLoc').value;
+  const person=document.getElementById('nInspPerson').value;
+  const result=document.getElementById('nInspResult').value;
+  const next=document.getElementById('nInspNext').value;
+  const note=document.getElementById('nInspNote').value;
+  if(!item){alert('점검항목을 입력하세요');return;}
+  const no=DATA.inspections.length+1;
+  DATA.inspections.unshift({no,date:d||'2026-07-04',type:t,cat,item,loc,person,org:'자체',result,action:note,next});
+  renderInspect();
+  alert('✅ 점검이력이 등록되었습니다!');
+}
+
+function addRepair(){
+  const d=document.getElementById('nRepDate').value;
+  const t=document.getElementById('nRepType').value;
+  const equip=document.getElementById('nRepEquip').value;
+  const content=document.getElementById('nRepContent').value;
+  const vendor=document.getElementById('nRepVendor').value;
+  const mat=parseInt(document.getElementById('nRepMat').value)||0;
+  const labor=parseInt(document.getElementById('nRepLabor').value)||0;
+  if(!equip){alert('설비명을 입력하세요');return;}
+  const no=DATA.repairs.length+1;
+  DATA.repairs.unshift({no,rcvDate:d,workDate:d,type:t,equip,content,vendor,mat,labor,status:'완료'});
+  renderRepair();
+  alert('✅ 보수이력이 등록되었습니다!');
+}
+
+function addComplaint(){
+  const person=document.getElementById('nCmpPerson').value;
+  const loc=document.getElementById('nCmpLoc').value;
+  const type=document.getElementById('nCmpType').value;
+  const content=document.getElementById('nCmpContent').value;
+  const assign=document.getElementById('nCmpAssign').value;
+  if(!person||!content){alert('민원인과 내용을 입력하세요');return;}
+  const no=`MC-2607-00${DATA.complaints.length+1}`;
+  DATA.complaints.unshift({no,date:'2026-07-04 '+new Date().toTimeString().slice(0,5),person,loc,type,content,assign,status:'미처리',done:'-',sat:'-'});
+  renderComplaint();
+  alert('✅ 민원이 접수되었습니다!');
+}
+
+// ── AI 호출 ──────────────────────────────────────────────
+function getKey(){
+  const mode=document.getElementById('aiMode').value;
+  if(mode==='template') return null;
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k){alert('AI 모드에서는 상단의 Anthropic API Key를 입력하세요.\n템플릿 모드로 전환하면 API 없이 사용 가능합니다.');return null;}
+  return k;
+}
+function toggleAIMode(){
+  const mode=document.getElementById('aiMode').value;
+  document.getElementById('apiKeyWrap').style.display=mode==='api'?'flex':'none';
+}
+
+async function callAI(prompt, targetId, loadingMsg='AI 분석 중...', templateFn=null){
+  const mode=document.getElementById('aiMode').value;
+  const el=document.getElementById(targetId);
+  el.style.display='block';
+  if(mode==='template'){
+    el.className='ai-result';
+    el.innerHTML=templateFn?templateFn():'<span style="color:var(--gray3)">📋 템플릿 모드: AI 모드로 전환하면 Claude AI가 맞춤 내용을 생성합니다.</span>';
+    return;
+  }
+  const key=getKey();if(!key) return;
+  el.className='ai-result loading';
+  el.textContent=loadingMsg;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-beta':'interop-2025-05-14',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        stream:true,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    if(!res.ok) throw new Error('API 오류: '+res.status);
+    const reader=res.body.getReader();
+    const dec=new TextDecoder();
+    let buf='',txt='';
+    el.className='ai-result';el.textContent='';
+    while(true){
+      const {done,value}=await reader.read();
+      if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');
+      buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        const data=line.slice(6).trim();
+        if(data==='[DONE]') continue;
+        try{
+          const j=JSON.parse(data);
+          if(j.type==='content_block_delta'&&j.delta?.text){
+            txt+=j.delta.text;
+            el.textContent=txt;
+          }
+        }catch(e){}
+      }
+    }
+  }catch(e){
+    el.className='ai-result';
+    el.textContent='오류: '+e.message;
+  }
+}
+
+// 설비 AI 분석
+function aiEquipDetail(name,cat,status){
+  callAI(`당신은 한국마사회시설관리 대구사업소의 시설관리 전문가입니다.
+설비명: ${name} (분류: ${cat}, 현재상태: ${status})
+이 설비의 현재 상태에 대해 간략한 진단과 관리 권고사항을 3~5줄로 작성해주세요.
+한국 공공기관 시설관리 전문가 스타일로 간결하게 작성하세요.`,'facilityAI',`${name} AI 분석 중...`,
+  ()=>tmplEquip(name,cat,status));
+}
+function tmplEquip(name,cat,status){
+  const now=new Date(2026,6,4);
+  const statusMap={정상:'현재 정상 가동 중이며 이상 없음. 정기 점검 주기 유지 필요.',필터교체필요:'필터 오염도 증가로 교체 필요. 즉시 교체 조치 요청 권고.',이상:'이상 발생 확인. 전문업체 점검 후 수리/교체 여부 결정 필요.'};
+  return `【${name} 설비 점검 의견】\n\n▶ 분류: ${cat}\n▶ 현재 상태: ${status}\n▶ 진단: ${statusMap[status]||'상태 확인 필요.'}\n▶ 권고사항:\n  - 정기 점검 일정 준수 및 점검일지 기록 유지\n  - 이상 징후 발견 시 즉시 담당업체 연락 조치\n  - 설비 교체 예정일 사전 확인 및 예산 반영\n\n※ 본 의견은 템플릿 기반 자동 생성 내용입니다. AI 모드에서는 Claude가 맞춤 분석을 제공합니다.`;
+}
+function aiAnalyzeFacility(){
+  const statusList=DATA.facilities.map(f=>`${f.name}(${f.status})`).join(', ');
+  callAI(`당신은 한국마사회시설관리 대구사업소의 시설관리 전문가입니다.
+현재 12개 설비 현황: ${statusList}
+전체 설비 상태를 분석하고 우선 관리가 필요한 설비와 예방 조치 사항을 5~7줄로 요약해주세요.`,'facilityAI','설비 현황 AI 분석 중...',
+  ()=>{
+    const issues=DATA.facilities.filter(f=>f.status!=='정상');
+    return `【설비 현황 종합 분석 — ${new Date(2026,6,4).toLocaleDateString('ko-KR')}】\n\n▶ 전체 설비 ${DATA.facilities.length}개 중 정상 ${DATA.facilities.filter(f=>f.status==='정상').length}개, 조치 필요 ${issues.length}개\n\n▶ 즉시 조치 필요 설비:\n${issues.length?issues.map(f=>`  - ${f.name} (${f.loc}): ${f.status}`).join('\n'):'  - 해당 없음 (전 설비 정상)'}\n\n▶ 예방 관리 권고:\n  - 공조기 필터 교체: 즉시 시행 (공조테크 연락)\n  - 냉각탑 수질관리: D-28 (위생검사원 일정 확인)\n  - 엘리베이터 월간점검: 7월 내 실시 (엘리텍)\n\n▶ 종합 의견: 전반적 설비 상태 양호. 정기 점검 주기 준수 및 소모품(필터류) 교체 시기 관리 강화 필요.\n\n※ 템플릿 기반 자동 생성. AI 모드에서 Claude 맞춤 분석 제공.`;
+  });
+}
+
+// 점검 AI
+function aiInspectSummary(){
+  const list=DATA.inspections.map(i=>`${i.date} ${i.item}(${i.result}): ${i.action}`).join('\n');
+  callAI(`당신은 한국마사회시설관리 대구사업소 시설관리 전문가입니다.
+최근 점검이력:
+${list}
+점검 현황을 분석하고 주의사항 및 개선 권고사항을 공무원/공공기관 보고서 스타일로 5~7줄 작성해주세요.`,'inspAI','점검이력 AI 분석 중...',
+  ()=>{
+    const abnormal=DATA.inspections.filter(i=>i.result==='이상'||i.result==='보류');
+    return `【점검이력 현황 요약 보고】\n\n▶ 총 점검 건수: ${DATA.inspections.length}건 (정기 ${DATA.inspections.filter(i=>i.type==='정기점검').length} / 비정기 ${DATA.inspections.filter(i=>i.type==='비정기점검').length} / 법정 ${DATA.inspections.filter(i=>i.type==='법정점검').length})\n▶ 이상 발견: ${abnormal.length}건${abnormal.length?'\n  '+abnormal.map(i=>`- ${i.item}(${i.date}): ${i.action}`).join('\n  '):''}\n\n▶ 주요 점검 결과:\n  - 소방시설 종합점검: 이상 무 (스프링클러 헤드 3개 교체 조치 완료)\n  - 배전반 점검: 누전차단기 교체 완료\n  - 승강기 오작동: 버튼 교체 완료\n  - 공조기 필터: 전량 교체 완료\n\n▶ 권고사항:\n  - 차기 소화기 점검(2026.04) 일정 확인 필요\n  - 배전반 정기점검 주기 단축 검토 권고\n  - 승강기 월간점검 이행 여부 지속 모니터링\n\n※ 템플릿 기반 자동 생성. AI 모드에서 Claude 맞춤 분석 제공.`;
+  });
+}
+function aiGenInspNote(){
+  const item=document.getElementById('nInspItem').value;
+  const cat=document.getElementById('nInspCat').value;
+  const result=document.getElementById('nInspResult').value;
+  if(!item){alert('점검항목을 먼저 입력하세요');return;}
+  callAI(`한국마사회시설관리 대구사업소 시설 점검 전문가입니다.
+점검항목: ${item} (분류: ${cat}, 결과: ${result})
+이 점검에 대한 조치사항/특이사항을 현장 실무자 스타일로 2~3줄 작성해주세요.`,'inspNewAI','조치사항 자동완성 중...',
+  ()=>{
+    const actionMap={양호:`${item} 점검 결과 이상 없음. 현 상태 유지 및 차기 정기점검 일정 준수.`,완료:`${item} 작업 완료. 정상 가동 확인 후 이상 없음.`,이상:`${item} 점검 중 이상 발견. 담당업체 연락 후 즉시 조치 진행. 조치 완료 후 재점검 예정.`,보류:`${item} 점검 보류. 추가 확인 필요. 담당자 협의 후 재점검 일정 수립 예정.`};
+    return `【조치사항 자동완성】\n\n${actionMap[result]||`${item} 점검 완료. 결과 기록 유지.`}\n\n※ 위 내용을 참고하여 실제 현장 상황에 맞게 수정하여 사용하세요.\n※ AI 모드에서는 Claude가 맞춤 내용을 생성합니다.`;
+  });
+}
+
+// 보수 AI
+function aiRepairReport(){
+  const equip=document.getElementById('nRepEquip').value;
+  const wContent=document.getElementById('nRepContent').value;
+  const vendor=document.getElementById('nRepVendor').value;
+  const mat=document.getElementById('nRepMat').value||0;
+  const labor=document.getElementById('nRepLabor').value||0;
+  if(!equip){alert('설비명을 먼저 입력하세요');return;}
+  callAI(`한국마사회시설관리 대구사업소 시설관리 전문가입니다.
+설비: ${equip}, 작업내용: ${wContent}, 업체: ${vendor}
+이 보수 작업에 대한 완료보고서 개요를 공무원 보고서 스타일로 4~6줄 작성해주세요.`,'repNewAI','보수보고서 초안 작성 중...',
+  ()=>`【보수작업 완료보고서 초안】\n\n▶ 작업설비: ${equip}\n▶ 작업내용: ${wContent||'미입력'}\n▶ 작업업체: ${vendor||'미입력'}\n▶ 소요비용: 자재비 ${parseInt(mat).toLocaleString()}원 + 인건비 ${parseInt(labor).toLocaleString()}원 = 합계 ${(parseInt(mat)+parseInt(labor)).toLocaleString()}원\n\n▶ 작업 결과:\n  - 작업 완료 후 설비 정상 가동 확인\n  - 이상 없음 확인 및 담당자 서명 완료\n  - 관련 서류(작업완료서, 사진) 보관\n\n▶ 향후 조치: 차기 정기점검 일정에 포함하여 상태 모니터링\n\n※ 템플릿 자동 생성. AI 모드에서 Claude 맞춤 보고서 제공.`);
+}
+
+// 안전점검 AI
+function aiSafetyCheck(){
+  const upcoming=DATA.safety.filter(s=>s.result!=='완료'||s.next<'2027-01-01').map(s=>`${s.name}: 다음점검 ${s.next}`).join('\n');
+  callAI(`한국마사회시설관리 대구사업소 안전관리 전문가입니다.
+법정 안전점검 현황 (임박/예정):
+${upcoming}
+법정점검 준수 현황을 분석하고 우선 조치가 필요한 항목과 일정 관리 권고사항을 5~7줄로 작성해주세요.`,'safetyAI','법정점검 현황 분석 중...',
+  ()=>{
+    const urgent=DATA.safety.filter(s=>{const d=new Date(s.next);const t=new Date(2026,6,4);return d>t&&(d-t)<1000*60*60*24*60;});
+    return `【법정 안전점검 현황 분석 보고】\n\n▶ 총 법정점검 항목: ${DATA.safety.length}건\n▶ 완료: ${DATA.safety.filter(s=>s.result==='완료').length}건 / 예정: ${DATA.safety.filter(s=>s.result!=='완료').length}건\n\n▶ 긴급 관리 필요 항목 (60일 이내):\n${urgent.length?urgent.map(s=>{const d=Math.ceil((new Date(s.next)-new Date(2026,6,4))/(1000*60*60*24));return `  - ${s.name}: ${s.next} (D-${d}) → ${s.org} 일정 확인 필요`;}).join('\n'):'  - 해당 없음'}\n\n▶ 지적사항 미조치 확인:\n${DATA.safety.filter(s=>s.issue!=='없음'&&s.issue!=='이상없음'&&s.issue!=='-').map(s=>`  - ${s.name}: ${s.issue}`).join('\n')||'  - 전 항목 조치 완료'}\n\n▶ 권고사항:\n  1. 냉각탑 수질관리 (D-28) 위생검사원 즉시 일정 확정 요망\n  2. 소방시설 작동점검 (08월) 소방안전(주) 사전 협의\n  3. 승강기 정기검사 (11월) 승강기관리원 예약 필요\n\n※ 템플릿 기반 자동 생성. AI 모드에서 Claude 맞춤 분석 제공.`;
+  });
+}
+
+// 민원 AI 답변
+function aiComplaintReply(){
+  const cContent=document.getElementById('nCmpContent').value;
+  const type=document.getElementById('nCmpType').value;
+  const person=document.getElementById('nCmpPerson').value;
+  const assign=document.getElementById('nCmpAssign').value;
+  if(!cContent){alert('민원 내용을 먼저 입력하세요');return;}
+  callAI(`한국마사회시설관리 대구사업소 민원 담당자입니다.
+민원인: ${person||'민원인'}, 유형: ${type}, 내용: ${cContent}
+이 민원에 대한 정중하고 전문적인 답변 초안을 3~5줄로 작성해주세요. 처리 일정과 담당자 배정 내용을 포함하세요.`,'cmpNewAI','민원 답변 초안 작성 중...',
+  ()=>tmplComplaint(person,type,cContent,assign));
+}
+function tmplComplaint(person,type,content,assign){
+  const typeMap={시설하자:'해당 시설 하자를 확인하고 신속히 보수 조치하겠습니다.',환경:'쾌적한 환경 제공을 위해 즉시 점검 후 조치하겠습니다.',주차:'주차 환경 개선을 위해 빠른 시일 내 조치하겠습니다.',안전:'안전과 관련된 사항으로 최우선으로 처리하겠습니다.',기타:'접수하신 민원을 검토하고 신속히 처리하겠습니다.'};
+  return `【민원 답변 초안】\n\n${person||'민원인'} 님, 안녕하십니까.\n한국마사회시설관리 대구사업소입니다.\n\n먼저 불편을 드린 점에 대해 진심으로 사과 말씀 드립니다.\n접수하신 민원 내용(${type}: ${content})을 확인하였으며,\n${typeMap[type]||'접수하신 내용을 검토 후 조치하겠습니다.'}\n\n담당자: ${assign||'시설팀 담당자'}\n처리 예정: 접수 후 2영업일 이내\n\n추가 문의사항은 관리사무소(☎ 053-XXX-XXXX)로 연락 주시기 바랍니다.\n감사합니다.\n\n한국마사회시설관리 대구사업소 드림\n\n※ 위 답변 초안을 실제 상황에 맞게 수정하여 사용하세요.`;
+}
+function aiComplaintReplyDirect(content,type,person){
+  callAI(`한국마사회시설관리 대구사업소 민원 담당자입니다.
+민원인: ${person}, 유형: ${type}, 내용: ${content}
+이 민원에 대한 정중하고 전문적인 답변 초안을 3~5줄로 작성해주세요. 처리 일정과 담당자 배정 내용을 포함하세요.`,'facilityAI','민원 답변 작성 중...');
+  goPage('dashboard');
+  setTimeout(()=>{
+    const el=document.getElementById('facilityAI');
+    if(el){el.style.display='block';window.scrollTo(0,el.offsetTop);}
+  },300);
+  goPage('complaint');
+}
+
+// 비용 AI
+function aiCostAnalysis(){
+  callAI(`한국마사회시설관리 대구사업소 예산 관리 전문가입니다.
+2026년 연간 예산 1억5,240만원 중 1억4,571만원(95.6%) 집행.
+주요 항목: 청소용역 2,400만, 경비용역 3,600만, 전기요금 4,710만(예산98%).
+가스요금 집행률 81%, 전기설비보수 집행률 33%.
+비용 분석 및 절감 방안을 공무원 보고서 스타일로 5~7줄 작성해주세요.`,'costAI','비용 분석 중...',
+  ()=>`【2026년 시설관리 비용 분석 보고】\n\n▶ 연간 예산: 152,400,000원\n▶ 누적 집행: 145,710,000원 (집행률 95.6%)\n▶ 잔여 예산: 6,690,000원\n\n▶ 주요 집행 현황:\n  - 전기요금: 47,100,000원/48,000,000원 (집행률 98.1%) → 절감 여지 검토\n  - 가스요금: 9,700,000원/12,000,000원 (집행률 80.8%) → 동절기 집행 증가 예상\n  - 전기설비보수: 1,000,000원/3,000,000원 (집행률 33.3%) → 잔여예산 활용 계획 수립 필요\n  - 건축보수: 6,500,000원/8,000,000원 (집행률 81.3%)\n\n▶ 절감 권고사항:\n  1. 전기요금: LED 조명 교체 및 에너지 효율 설비 도입 검토 (연간 약 300만원 절감 예상)\n  2. 가스요금: 동절기 전 보일러 효율 점검 및 단열 보강\n  3. 용역비: 연간 계약 갱신 시 경쟁 입찰 검토 (청소·경비)\n\n※ 템플릿 기반 자동 생성. AI 모드에서 Claude 심층 분석 제공.`);
+}
+
+// AI 종합 분석
+function aiComprehensive(){
+  callAI(`당신은 한국마사회시설관리 대구사업소의 시설관리 총괄 전문가입니다.
+현황 요약:
+- 관리 설비: 12종 (소방/전기/승강기/공조/급배수/보안/가스/주차)
+- 이번 달 점검: 6건, 보수: 2건, 미처리 민원: 1건
+- 법정점검 완료율: 87%, 시설 가동률: 97%
+- 연간 예산 집행률: 95.6% (1억4,571만/1억5,240만)
+- 주요 이슈: 냉각탑 수질관리 D-28, 8층 복도 형광등 민원 미처리
+
+이 데이터를 종합 분석하여 이번 달 주요 조치사항, 위험 요소, 개선 권고사항을 포함한 종합 보고 형식으로 작성해주세요.`,'aiAnalysisResult','종합 분석 중...',
+  ()=>`【대구사업소 시설관리 종합 현황 분석 — 2026년 7월】\n\n═══════════════════════════════\n1. 핵심 KPI 현황\n═══════════════════════════════\n▶ 설비 가동률: 97% (정상 11/12종, 공조기 필터교체 필요)\n▶ 이번 달 점검: 6건 완료\n▶ 미처리 민원: 1건 (즉시 조치 필요)\n▶ 법정점검 완료율: 87%\n▶ 예산 집행률: 95.6%\n\n═══════════════════════════════\n2. 즉시 조치 사항 (긴급)\n═══════════════════════════════\n① 【긴급】 8층 복도 형광등 불량 민원 (MC-2603-001) — 접수 후 미처리 상태. 즉시 시설팀 배정 요망\n② 【D-28】 냉각탑 수질관리 (2026.07.31) — 위생검사원 일정 즉시 확정 필요\n③ 공조기(중앙) 필터 교체 — 공조테크 연락하여 교체 일정 수립\n\n═══════════════════════════════\n3. 이번 달 예정 점검 관리\n═══════════════════════════════\n- 승강기 월간점검 (07.07, 엘리텍) — 일정 확인\n- 전기 절연저항 측정 (07.15, 자체)\n- CCTV 분기점검 (07.20, 보안테크)\n\n═══════════════════════════════\n4. 종합 의견\n═══════════════════════════════\n전반적인 시설 상태는 양호하나, 민원 미처리 및 법정점검 일정 관리에 주의가 필요합니다.\n예산 잔여분(669만원)의 효율적 집행 계획 수립을 권고드립니다.\n\n※ 템플릿 기반 자동 생성. AI 모드에서 Claude 맞춤 심층 분석 제공.`);
+}
+function aiRisk(){
+  callAI(`한국마사회시설관리 대구사업소 안전관리 전문가입니다.
+현재 위험 징후:
+1. 냉각탑 수질관리 D-28 (2026.07.31 예정)
+2. 8층 복도 형광등 불량 민원 미처리 (2026.03.10 접수)
+3. 공조기 필터 교체 필요 상태
+4. 전기설비보수 예산 집행률 33% (잔여 200만원)
+위험 요소를 등급화(긴급/주의/모니터링)하고 즉시 조치 사항을 구체적으로 5~8줄 작성해주세요.`,'aiAnalysisResult','위험 요소 분석 중...',
+  ()=>`【위험 요소 조기 경보 분석】\n\n🔴 [긴급 — 즉시 조치]\n① 8층 복도 형광등 불량 민원 (MC-2603-001)\n   → 접수일 2026.03.10 이후 미처리 상태 (처리 지연 심각)\n   → 즉시 시설팀 배정, 금일 처리 후 민원인 결과 통보\n\n🟠 [주의 — 1주일 이내 조치]\n② 냉각탑 수질관리 D-28 (2026.07.31)\n   → 위생검사원 일정 즉시 확정 및 사전 준비물 확인\n③ 공조기(중앙) 필터 교체 필요\n   → 공조테크(053-XXX-XXXX) 연락, 7월 내 교체 일정 수립\n\n🟡 [모니터링 — 이번 달 내 검토]\n④ 전기설비보수 예산 잔여 200만원 (집행률 33%)\n   → 하반기 전기설비 보수 계획 수립하여 예산 집행\n⑤ 소방시설 작동점검 (2026.08.10 예정)\n   → 소방안전(주) 사전 협의 및 점검 준비\n\n▶ 종합: 현재 긴급 사항 1건, 주의 사항 2건 즉시 조치 필요.\n\n※ 템플릿 기반 자동 생성. AI 모드에서 Claude 맞춤 분석 제공.`);
+}
+function aiMaintPlan(){
+  callAI(`한국마사회시설관리 대구사업소 시설관리 전문가입니다.
+하반기(7~12월) 주요 예방보수 계획을 수립해주세요:
+- 냉각탑 수질관리 (7월)
+- 소방시설 작동점검 (8월)
+- 냉방기→난방기 전환 점검 (10월)
+- 승강기 정기검사 (11월)
+- 전기안전점검 (12월)
+각 항목별 준비사항, 담당업체, 주의사항을 포함하여 실무 계획서 형태로 작성해주세요.`,'aiAnalysisResult','예방보수 계획 수립 중...',
+  ()=>`【2026년 하반기 예방보수 실행 계획】\n\n─────────────────────────────\n7월 (이번 달)\n─────────────────────────────\n▶ 냉각탑 수질관리 (07.31, D-28)\n   담당: 위생검사원 | 준비: 수질검사 시료 채취 준비, 접근 안전조치\n   주의: 레지오넬라균 검사 포함, 결과 구청 제출\n▶ 공조기 필터 교체 (07월 중)\n   담당: 공조테크 | 준비: 미디엄필터 수량 확인, TBM·위험성평가 서류\n\n─────────────────────────────\n8월\n─────────────────────────────\n▶ 소방시설 작동점검 (08.10)\n   담당: 소방안전(주) | 준비: 정전 사전 공지, 소방서 신고\n   주의: 법정 점검, 결과 소방서 제출 필수\n\n─────────────────────────────\n10월\n─────────────────────────────\n▶ 냉방→난방 전환 점검\n   담당: 공조테크 | 준비: 보일러 시운전, 난방배관 점검\n▶ 승강기 월간점검 (10.07)\n   담당: 엘리텍\n\n─────────────────────────────\n11월\n─────────────────────────────\n▶ 승강기 정기검사 (법정)\n   담당: 승강기관리원 | 준비: 검사 신청서 사전 제출\n   주의: 결과 행안부 보고 필수\n\n─────────────────────────────\n12월\n─────────────────────────────\n▶ 전기안전점검 (법정)\n   담당: 한국전기안전 | 준비: 정전작업 공지, LOTO 준비\n   주의: 결과 산업부 보고, TBM·위험성평가 서류 사전 준비\n\n※ 템플릿 기반 자동 생성. AI 모드에서 Claude 맞춤 계획 제공.`);
+}
+function aiCostSave(){
+  callAI(`한국마사회시설관리 대구사업소 예산 전문가입니다.
+연간 예산 1억5,240만원. 주요 고정비: 청소용역 2,400만, 경비용역 3,600만, 전기요금 4,800만.
+AI 분석을 통해 절감 가능한 항목, 에너지 효율화 방안, 용역비 최적화 방법을 구체적으로 5~8줄 제안해주세요.`,'aiAnalysisResult','비용 절감 방안 분석 중...',
+  ()=>`【시설관리 비용 절감 방안 제안】\n\n═══════════════════════════════\n1. 에너지 비용 절감 (전기요금 4,800만원/년)\n═══════════════════════════════\n① LED 조명 전면 교체\n   - 투자비: 약 500만원 (정부 보조금 활용 가능)\n   - 절감 효과: 연간 약 300~500만원 (전기요금 7~10% 절감)\n   - 회수기간: 1~2년\n\n② 공조기 인버터 제어 도입\n   - 피크타임 냉난방 부하 조절로 전기요금 절감\n   - 예상 절감: 연간 약 200만원\n\n③ 대기전력 차단 장치 설치\n   - 퇴근 후 미사용 설비 자동 차단\n\n═══════════════════════════════\n2. 용역비 최적화 (청소+경비 6,000만원/년)\n═══════════════════════════════\n① 연간 계약 갱신 시 2~3개 업체 경쟁 입찰 실시\n   - 예상 절감: 3~5% (180~300만원)\n② 청소 주기 조정 (비핵심 구역 주3회→주2회)\n   - 연간 약 100만원 절감 가능\n\n═══════════════════════════════\n3. 예방보수로 사후 수리비 절감\n═══════════════════════════════\n① 정기 오일 교체, 필터 교체 등 소모품 관리 철저\n   → 대형 고장 예방으로 수리비 30~50% 절감 효과\n\n▶ 총 절감 가능액: 연간 약 600~1,000만원 추정\n\n※ 템플릿 기반 자동 생성. AI 모드에서 Claude 심층 분석 제공.`);
+}
+
+// 문서 생성
+async function genDoc(type){
+  const name=document.getElementById('docWorkName').value.trim();
+  if(!name){alert('작업명을 입력하세요');return;}
+  const date=document.getElementById('docDate').value||'2026년 07월 04일';
+  const place=document.getElementById('docPlace').value||'대구사업소';
+  const vendor=document.getElementById('docVendor').value||'협력업체';
+  const period=document.getElementById('docPeriod').value||'1일';
+  const dtype=document.getElementById('docType').value;
+  const note=document.getElementById('docNote').value;
+
+  const tabIdx={'risk':0,'tbm':1,'report':2};
+  document.querySelectorAll('.docTab').forEach((el,i)=>el.style.display=i===tabIdx[type]?'block':'none');
+
+  const mode=document.getElementById('aiMode').value;
+  if(mode==='template'){
+    const targets={risk:'docRiskContent',tbm:'docTBMContent',report:'docReportContent'};
+    const el=document.getElementById(targets[type]);
+    el.style.display='block';
+    if(type==='risk') el.innerHTML=tmplRisk(name,date,place,vendor,dtype);
+    else if(type==='tbm') el.innerHTML=tmplTBM(name,date,place,vendor);
+    else el.innerHTML=tmplReport(name,date,place,vendor,period);
+    return;
+  }
+
+  const prompts={
+    risk:`한국마사회시설관리 대구사업소 산업안전 전문가입니다.
+작업명: ${name} / 일시: ${date} / 장소: ${place} / 업체: ${vendor} / 분류: ${dtype}
+추가정보: ${note||'없음'}
+위험성평가표를 작성하세요:
+- 작업단계 ①~⑥ 구성
+- 각 단계별 위험요인 1~2개
+- 3×3 매트릭스(가능성×심각성=등급)
+- 개선대책 구체적으로
+- 개선 후 위험성 수치 포함
+- 결재: 작성(${vendor}) | 검토: 김재홀(반장) | 승인: 시설팀장 | ${date}
+텍스트 표 형태로 출력하세요.`,
+    tbm:`한국마사회시설관리 대구사업소 산업안전 전문가입니다.
+작업명: ${name} / 일시: ${date} / 장소: ${place} / 업체: ${vendor}
+TBM 회의록을 작성하세요:
+- 일시: ${date} 09:00~09:10
+- 위험성평가: ■ 정기평가 포함
+- 안전작업허가서: 전기/고소이면 발행, 아니면 미발행
+- 잠재위험요인 5개 + 개선대책 + 예체크
+- 중점관리 위험요인 선정 및 대책
+- 작업종료 후 미팅 3개 항목
+- TBM리더: 김재홀(반장) / 참석자: ${vendor} 작업원`,
+    report:`한국마사회시설관리 대구사업소 시설관리 전문가입니다.
+작업명: ${name} / 일시: ${date} / 장소: ${place} / 업체: ${vendor} / 기간: ${period}
+작업완료보고서를 작성하세요:
+- 작업 전 점검 5개 항목
+- 작업 수행 내용 ①~⑧
+- 점검 항목별 결과표
+- 사진 첨부란 (작업전/작업후 3행)
+- 특이사항 및 종합의견
+- 차기 점검 시기
+- 결재: 작성(${vendor}) | 검토: 김재홀 | 승인: 시설팀장
+격식체 공문 스타일로 작성하세요.`
+  };
+  const targets={risk:'docRiskContent',tbm:'docTBMContent',report:'docReportContent'};
+  const tabs={'risk':0,'tbm':1,'report':2};
+  const tabBtns=document.querySelectorAll('.docTab ~ .tabs .tab,.tabs ~ .docTab');
+  document.querySelectorAll('.docTab').forEach((el,i)=>el.style.display=i===tabs[type]?'block':'none');
+  document.querySelectorAll('[onclick^="switchTab(this,\'docTab\'"]').forEach((btn,i)=>btn.classList.toggle('active',i===tabs[type]));
+  await callAI(prompts[type],targets[type],`${type==='risk'?'위험성평가표':type==='tbm'?'TBM 일지':'작업완료보고서'} 생성 중...`);
+}
+function genRisk(){genDoc('risk');}
+function genTBM(){genDoc('tbm');}
+function genReport(){genDoc('report');}
+
+function tmplRisk(name,date,place,vendor,dtype){
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+위  험  성  평  가  표
+한국마사회시설관리 대구사업소 | 작성일: ${date}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+작업명: ${name}
+작업장소: ${place} | 작업분류: ${dtype} | 작업업체: ${vendor}
+
+【작업단계】 | 【위험요인】 | 가능성 | 심각성 | 위험등급 | 【개선대책】 | 개선후가능성 | 개선후심각성 | 개선후등급
+──────────────────────────────────────────────────
+①준비·이동   | 작업장 바닥 오염·미끄럼으로 인한 전도        | 2 | 2 | 4 | 작업 전 바닥 청소, 미끄럼방지 안전화 착용           | 1 | 1 | 1
+②작업 준비   | 공구·자재 낙하로 인한 하부 근로자 부상         | 2 | 2 | 4 | 공구 낙하방지줄 체결, 하부 접근금지 구역 설정        | 1 | 1 | 1
+③주요 작업   | 감전·협착·추락 등 주요 위험요인               | 2 | 3 | 6 | LOTO 실시, 개인보호구 착용, 2인 1조 작업           | 1 | 2 | 2
+④마무리 작업 | 설비 재가동 시 이상 발생 가능성               | 1 | 2 | 2 | 가동 전 안전 확인, 담당자 최종 점검                | 1 | 1 | 1
+⑤정리·정돈   | 폐자재·공구 정리 중 부상                     | 1 | 1 | 1 | 안전장갑 착용, 폐기물 분리 수거                    | 1 | 1 | 1
+
+【위험등급 기준】 1~2: 낮음(허용) | 3~4: 보통(주의) | 6~9: 높음(개선필요)
+【가능성·심각성】 1낮음 | 2보통 | 3높음
+
+【결재】
+작성: ${vendor} | 검토: 김재홀(반장) | 승인: 시설팀장 | 시행일자: ${date}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 이 문서는 템플릿 자동생성입니다.
+AI 모드로 전환하면 Claude가 작업 특성에 맞는 맞춤 위험성평가표를 생성합니다.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+}
+
+function tmplTBM(name,date,place,vendor){
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+< TBM(작업 시작 전 안전 회의) 회의록 >
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+일  시: ${date} 09:00 ~ 09:10       장  소: ${place}
+작 업 명: 시설 업무
+작업내용: ${name}
+위험성평가: ■ 정기평가 포함 실시  □ 수시평가 실시
+안전작업허가서: □ 발행  ■ 미발행(사유: 허가 대상 아님)
+
+【잠재위험요인 및 개선대책 사전점검】
+① 작업 전 안전 확인 미흡       | ① 작업 전 TBM 실시 및 안전교육   | 예 ✓
+② 개인보호구 미착용             | ② 안전모·안전화·장갑 착용 의무화   | 예 ✓
+③ 작업 중 무단 기동·재투입      | ③ LOTO 실시 및 작업 중 감시원 배치 | 예 ✓
+④ 공구·자재 낙하               | ④ 낙하방지줄 체결, 하부 통제       | 예 ✓
+⑤ 작업 후 정리 불량            | ⑤ 작업 종료 후 정리정돈 확인       | 예 ✓
+
+■ 중점관리위험요인
+선정: 작업 중 안전사고 예방
+대책: 2인 1조 작업 실시, 개인보호구 착용, 작업 전 안전교육 철저
+
+■ 작업 종료 후 미팅
+· 작업 결과 및 이상 유무 확인
+· 개인보호구 반납 및 공구 정리
+· 다음 작업 일정 및 주의사항 공유
+
+■ 참석자 확인
+TBM 리더: 시설 / 반 장 / 김 재 홀 (서명)
+소속: ${vendor} / 작업원1 (서명)
+소속: ${vendor} / 작업원2 (서명)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 이 문서는 템플릿 자동생성입니다.
+AI 모드로 전환하면 Claude가 작업별 맞춤 TBM 일지를 생성합니다.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+}
+
+function tmplReport(name,date,place,vendor,period){
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+작  업  완  료  보  고  서
+한국마사회시설관리 대구사업소
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+작업일시: ${date}       작업장소: ${place}
+작 업 명: ${name}
+작업인원: ${vendor} / ${period}
+작업근거: 시설 정기 유지보수 계획
+
+■ 작업 전 점검 내용
+점검항목              | 점검결과            | 비고
+──────────────────────────────────────
+TBM 실시            | 완료                | 참석자 서명 확인
+개인보호구 착용      | 완료                | 안전모·안전화·장갑
+LOTO 실시           | 완료                | 전원 차단·태그아웃
+작업구역 출입통제    | 완료                | 접근금지 표지 부착
+작업도구 안전점검    | 완료                |
+
+■ 작업 수행 내용
+① 작업 전 TBM 실시 및 안전교육 (09:00~09:10)
+② 개인보호구 착용 확인 및 LOTO 실시
+③ 작업 구역 출입통제 조치
+④ ${name} 작업 수행
+⑤ 작업 결과 육안 확인 및 정상 가동 확인
+⑥ LOTO 해제 후 최종 점검
+⑦ 작업 구역 청소 및 정리·정돈 완료
+⑧ 작업 완료 보고 및 담당자 서명
+
+■ 작업 전·후 사진 첨부
+구  분    | 작 업 전        | 작 업 후
+──────────────────────────────────────
+주요설비  | [ 사진 첨부 ]   | [ 사진 첨부 ]
+작업 현장 | [ 사진 첨부 ]   | [ 사진 첨부 ]
+
+■ 특이사항 및 종합의견
+특이사항: 특이사항 없음 (정상 완료)
+종합의견: 계획된 작업을 안전하게 완료하였음. 안전수칙을 철저히 이행하였음.
+차기점검: 차기 정기점검 일정에 따라 관리 예정
+
+■ 결재
+작성: ${vendor}  |  검토: 김재홀(반장)  |  승인: 시설팀장
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 이 문서는 템플릿 자동생성입니다.
+AI 모드로 전환하면 Claude가 작업별 맞춤 완료보고서를 생성합니다.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+}
+
+function copyDoc(id){
+  const txt=document.getElementById(id).innerText;
+  navigator.clipboard.writeText(txt).then(()=>alert('클립보드에 복사되었습니다!'));
+}
+</script>
+</body>
+</html>
