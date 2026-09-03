@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>안전서류 자동생성기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#1F4E79;--navy2:#2E75B6;--navy3:#D6E4F0;--navy4:#EBF3FB;
+  --green:#1a7f37;--green2:#dafbe1;--red:#cf222e;--red2:#fff0f0;
+  --amber:#9a6700;--amber2:#fff8e1;--gray:#f7f9fc;--gray2:#e2e8f0;--gray3:#718096;
+  --text:#1a1a2e;--text2:#4a5568;--r:8px;--sh:0 1px 4px rgba(0,0,0,.08)}
+body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;background:#eef2f7;color:var(--text);font-size:14px}
+.hdr{background:var(--navy);color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.hdr-title{font-size:15px;font-weight:700}
+.hdr-badge{background:#F0A500;color:#111;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.hdr-ver{margin-left:auto;font-size:11px;color:rgba(255,255,255,.5)}
+.wrap{max-width:1100px;margin:0 auto;padding:18px;display:grid;grid-template-columns:340px 1fr;gap:16px}
+@media(max-width:800px){.wrap{grid-template-columns:1fr}}
+/* 입력 패널 */
+.panel{background:#fff;border:1px solid var(--gray2);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.panel-hdr{background:var(--navy);color:#fff;padding:10px 16px;font-size:13px;font-weight:700}
+.panel-body{padding:16px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 11px;border:1.5px solid var(--gray2);border-radius:var(--r);font-family:inherit;font-size:13px;outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--navy2)}
+.fg textarea{resize:vertical;min-height:56px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* 빠른선택 */
+.quick-label{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.quick-btns{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.qbtn{font-family:inherit;font-size:11px;padding:5px 10px;border:1px solid var(--navy3);border-radius:99px;background:var(--navy4);color:var(--navy);cursor:pointer;font-weight:600;transition:all .12s}
+.qbtn:hover{background:var(--navy);color:#fff}
+/* 생성 버튼 */
+.gen-btn{width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.gen-btn:hover{background:#153352}
+.gen-btn:active{transform:scale(.98)}
+/* 결과 패널 */
+.tabs{display:flex;border-bottom:2px solid var(--gray2)}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--gray3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit}
+.tab.on{color:var(--navy);border-bottom-color:var(--navy)}
+.doc-area{display:none;padding:16px}
+.doc-area.on{display:block}
+.doc-content{background:var(--gray);border:1px solid var(--gray2);border-radius:var(--r);padding:16px;font-size:13px;line-height:1.8;white-space:pre-wrap;min-height:300px;font-family:'맑은 고딕',monospace}
+.doc-empty{text-align:center;padding:60px 20px;color:var(--gray3)}
+.doc-empty .icon{font-size:40px;margin-bottom:12px}
+.btn-row{display:flex;gap:8px;margin-bottom:10px}
+.btn{font-family:inherit;font-size:12px;font-weight:600;padding:7px 14px;border-radius:var(--r);border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.btn-sec{background:#fff;color:var(--navy);border:1px solid var(--gray2)}.btn-sec:hover{background:var(--gray)}
+.btn-success{background:var(--green);color:#fff}
+/* 로딩 */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin .7s linear infinite}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <span style="font-size:18px">📝</span>
+  <span class="hdr-title">안전서류 자동생성기</span>
+  <span class="hdr-badge">무료</span>
+  <span class="hdr-ver">API 불필요 · 즉시 사용</span>
+</header>
+
+<div class="wrap">
+  <!-- 입력 패널 -->
+  <div>
+    <div class="panel">
+      <div class="panel-hdr">📋 작업 정보 입력</div>
+      <div class="panel-body">
+        <div class="quick-label">빠른 작업 선택</div>
+        <div class="quick-btns">
+          <button class="qbtn" onclick="quickSelect('공조기 미디엄필터 교체 작업','기계실 공조기실','공조테크','1일 / 2명','기계·설비')">공조기 필터 교체</button>
+          <button class="qbtn" onclick="quickSelect('외벽 누수 실리콘 코킹 작업','건물 외벽 전면','방수전문업체','3일 / 2명','외벽·방수')">외벽 코킹</button>
+          <button class="qbtn" onclick="quickSelect('전기안전진단 정기검사','B2F 수변전실·각층 분전반','전기안전공사','1일 / 3명','전기')">전기안전진단</button>
+          <button class="qbtn" onclick="quickSelect('냉각탑 상부 고소작업 점검','옥상 냉각탑','자체','1일 / 2명','기계·설비')">냉각탑 점검</button>
+          <button class="qbtn" onclick="quickSelect('소방설비 자체점검','전층 소방설비','소방안전(주)','1일 / 2명','소방')">소방점검</button>
+          <button class="qbtn" onclick="quickSelect('천장 배관 보온재 교체 작업','기계실·각층 천장 배관','협력업체','2일 / 3명','기계·설비')">배관 보온</button>
+          <button class="qbtn" onclick="quickSelect('UPS 배터리 교체 작업','4층 UPS실','전기업체','1일 / 2명','전기')">UPS 배터리</button>
+          <button class="qbtn" onclick="quickSelect('저수조 오름사다리 안전후크 설치','지하 기계실 저수조','자체','1일 / 2명','기계·설비')">안전후크 설치</button>
+        </div>
+
+        <div class="fg">
+          <label>작업명 *</label>
+          <input type="text" id="workName" placeholder="예) 공조기 미디엄필터 교체 작업">
+        </div>
+        <div class="fg-row">
+          <div class="fg">
+            <label>작업일시</label>
+            <input type="date" id="workDate">
+          </div>
+          <div class="fg">
+            <label>작업분류</label>
+            <select id="workType">
+              <option>전기</option><option>기계·설비</option><option>외벽·방수</option>
+              <option>소방</option><option>고소작업</option><option>배관·위생</option><option>기타</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label>작업장소</label>
+          <input type="text" id="workPlace" placeholder="예) B2F 전기실, 옥상, 기계실">
+        </div>
+        <div class="fg-row">
+          <div class="fg">
+            <label>작업업체</label>
+            <input type="text" id="workVendor" placeholder="예) 전기안전공사">
+          </div>
+          <div class="fg">
+            <label>기간 / 인원</label>
+            <input type="text" id="workPeriod" placeholder="예) 1일 / 2명">
+          </div>
+        </div>
+        <div class="fg">
+          <label>특이사항 (선택)</label>
+          <textarea id="workNote" placeholder="위험요인, 사용장비, 특이사항 등 입력 시 더 정확한 문서가 생성됩니다."></textarea>
+        </div>
+        <button class="gen-btn" onclick="genAll()">
+          <span id="genIcon">⚡</span> 3종 문서 자동생성
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 결과 패널 -->
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab on" onclick="switchTab(0)" id="tab0">⚠️ 위험성평가표</button>
+      <button class="tab" onclick="switchTab(1)" id="tab1">📋 TBM 일지</button>
+      <button class="tab" onclick="switchTab(2)" id="tab2">✅ 작업완료보고서</button>
+    </div>
+
+    <div class="doc-area on" id="area0">
+      <div class="btn-row" id="btns0" style="display:none">
+        <button class="btn btn-sec" onclick="copyDoc(0)">📄 복사</button>
+        <button class="btn btn-sec" onclick="printDoc(0)">🖨️ 인쇄</button>
+      </div>
+      <div class="doc-content" id="doc0">
+        <div class="doc-empty">
+          <div class="icon">📝</div>
+          <div>작업 정보를 입력하고<br>자동생성 버튼을 누르면<br>문서가 여기에 나타납니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-area" id="area1">
+      <div class="btn-row" id="btns1" style="display:none">
+        <button class="btn btn-sec" onclick="copyDoc(1)">📄 복사</button>
+        <button class="btn btn-sec" onclick="printDoc(1)">🖨️ 인쇄</button>
+      </div>
+      <div class="doc-content" id="doc1">
+        <div class="doc-empty"><div class="icon">📋</div><div>TBM 일지가 여기에 생성됩니다.</div></div>
+      </div>
+    </div>
+
+    <div class="doc-area" id="area2">
+      <div class="btn-row" id="btns2" style="display:none">
+        <button class="btn btn-sec" onclick="copyDoc(2)">📄 복사</button>
+        <button class="btn btn-sec" onclick="printDoc(2)">🖨️ 인쇄</button>
+      </div>
+      <div class="doc-content" id="doc2">
+        <div class="doc-empty"><div class="icon">✅</div><div>작업완료보고서가 여기에 생성됩니다.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 설정 불러오기
+function getOrg(){
+  try{return JSON.parse(localStorage.getItem('fm_org'))||{org:'우리 사업소',leader:'반장',elec:'전기안전관리자',p1:'담당자1',p2:'담당자2'};}
+  catch(e){return {org:'우리 사업소',leader:'반장',elec:'전기안전관리자',p1:'담당자1',p2:'담당자2'};}
+}
+
+// 초기화
+window.onload=function(){
+  const d=new Date();
+  document.getElementById('workDate').value=new Date().toISOString().slice(0,10);
+};
+
+// 빠른 선택
+function quickSelect(name,place,vendor,period,type){
+  document.getElementById('workName').value=name;
+  document.getElementById('workPlace').value=place;
+  document.getElementById('workVendor').value=vendor;
+  document.getElementById('workPeriod').value=period;
+  const sel=document.getElementById('workType');
+  for(let i=0;i<sel.options.length;i++){if(sel.options[i].value===type){sel.selectedIndex=i;break;}}
+}
+
+// 탭 전환
+function switchTab(n){
+  [0,1,2].forEach(i=>{
+    document.getElementById('tab'+i).classList.toggle('on',i===n);
+    document.getElementById('area'+i).classList.toggle('on',i===n);
+  });
+}
+
+// 위험요인 DB
+const RISK_DB = {
+  '전기': [
+    {단계:'①준비',위험:'충전부 접촉 감전 (고압·특고압)',가:'3',심:'3',등:'9',대책:'절연장갑(7kV급) 착용 의무, 검전기 무전압 확인 후 작업, 2인 1조, LOTO 실시',후가:'1',후심:'2',후등:'2'},
+    {단계:'②점검',위험:'아크 방전으로 인한 화상·화재',가:'2',심:'3',등:'6',대책:'보안경·면장갑 착용, 절연 공구 사용, 충전부 접근금지 표지 부착',후가:'1',후심:'2',후등:'2'},
+    {단계:'③측정',위험:'절연저항계 오작동으로 인한 감전',가:'2',심:'2',등:'4',대책:'검전기 기능 확인 후 사용, 측정 전 무전압 재확인',후가:'1',후심:'1',후등:'1'},
+    {단계:'④복전',위험:'역결선·오결선으로 인한 설비 손상',가:'1',심:'3',등:'3',대책:'전기안전관리자 최종 확인 후 복전, 배선도 대조 점검',후가:'1',후심:'1',후등:'1'},
+  ],
+  '기계·설비': [
+    {단계:'①준비',위험:'작업장 이동 중 바닥 미끄러짐·전도',가:'3',심:'1',등:'3',대책:'미끄럼방지 안전화 착용, 바닥 청소 후 작업, 이동 경로 확인',후가:'1',후심:'1',후등:'1'},
+    {단계:'②설비해체',위험:'중량물 취급 중 허리 부상·협착',가:'3',심:'2',등:'6',대책:'2인 1조 운반, 이동 대차 사용, 올바른 자세(무릎 굽혀 들기)',후가:'1',후심:'1',후등:'1'},
+    {단계:'③작업',위험:'회전체·구동부 협착·절단',가:'2',심:'3',등:'6',대책:'LOTO 실시, 회전체 완전 정지 확인 후 작업, 안전커버 제거 금지',후가:'1',후심:'2',후등:'2'},
+    {단계:'④마감',위험:'공구·부품 낙하로 인한 하부 부상',가:'2',심:'2',등:'4',대책:'공구 낙하방지줄 체결, 하부 출입통제, 안전모 착용',후가:'1',후심:'1',후등:'1'},
+  ],
+  '외벽·방수': [
+    {단계:'①고소이동',위험:'고소작업차·비계 전도 추락',가:'2',심:'3',등:'6',대책:'안전대 착용·체결, 고소작업차 아웃리거 고정, 2인 1조',후가:'1',후심:'2',후등:'2'},
+    {단계:'②코킹제거',위험:'노후 코킹재 분진 흡입',가:'3',심:'1',등:'3',대책:'방진마스크(KF94) 착용, 강제 환기, 눈 보호 보안경 착용',후가:'1',후심:'1',후등:'1'},
+    {단계:'③도포',위험:'실리콘·프라이머 유기용제 흡입',가:'3',심:'2',등:'6',대책:'방독마스크(유기증기용) 착용, 밀폐 공간 30분 이내 작업, 강제 환기',후가:'1',후심:'1',후등:'1'},
+    {단계:'④마감',위험:'강풍 중 작업 중 전도·비래',가:'2',심:'3',등:'6',대책:'풍속 10m/s 이상 작업 중지, 안전대 이중 체결, 낙하물 방지망 설치',후가:'1',후심:'2',후등:'2'},
+  ],
+  '소방': [
+    {단계:'①준비',위험:'소화약제 방출 오작동 질식',가:'2',심:'3',등:'6',대책:'작업 전 소화설비 차단 확인, 관계자 공지, 2인 1조',후가:'1',후심:'2',후등:'2'},
+    {단계:'②점검',위험:'헤드·배관 교체 중 누수 감전',가:'2',심:'2',등:'4',대책:'전기 차단 확인, 절연장갑 착용, 배수 후 작업',후가:'1',후심:'1',후등:'1'},
+    {단계:'③시험',위험:'작동시험 중 오발화 화재',가:'1',심:'3',등:'3',대책:'시험 전 관계자 전체 공지, 소화기 비치, 주변 가연물 제거',후가:'1',후심:'1',후등:'1'},
+    {단계:'④복구',위험:'점검 후 소화설비 미복구',가:'1',심:'3',등:'3',대책:'복구 체크리스트 확인, 담당자 최종 확인·서명',후가:'1',후심:'1',후등:'1'},
+  ],
+  '고소작업': [
+    {단계:'①준비',위험:'비계·사다리 전도 추락 사망',가:'2',심:'3',등:'6',대책:'안전대(전신식) 착용·이중 체결, 비계 아웃리거 고정, 2인 1조',후가:'1',후심:'2',후등:'2'},
+    {단계:'②승강',위험:'발판 미끄러짐 추락',가:'2',심:'3',등:'6',대책:'3점 지지 원칙 준수, 미끄럼방지 안전화, 젖은 발판 작업 금지',후가:'1',후심:'2',후등:'2'},
+    {단계:'③작업',위험:'공구·자재 낙하 하부 부상',가:'3',심:'2',등:'6',대책:'낙하방지줄 체결, 하부 바리케이드·감시원 배치',후가:'1',후심:'1',후등:'1'},
+    {단계:'④강풍',위험:'강풍 중 전도·비래',가:'2',심:'3',등:'6',대책:'풍속 10m/s 이상 즉시 하강·작업 중지',후가:'1',후심:'2',후등:'2'},
+  ],
+  '배관·위생': [
+    {단계:'①해체',위험:'잔류 유체(고온·고압) 누출 화상',가:'2',심:'3',등:'6',대책:'배관 차단·냉각 확인 후 작업, 내열장갑·보안경 착용',후가:'1',후심:'2',후등:'2'},
+    {단계:'②작업',위험:'유기용제(접착제) 흡입 두통',가:'3',심:'2',등:'6',대책:'방독마스크(유기증기용) 착용, 강제 환기, 30분 이내 교대',후가:'1',후심:'1',후등:'1'},
+    {단계:'③용접',위험:'용접 불꽃 화재',가:'2',심:'2',등:'4',대책:'방화포 설치, 소화기 비치, 주변 가연물 제거',후가:'1',후심:'1',후등:'1'},
+    {단계:'④복구',위험:'배관 누수 미확인 수손',가:'2',심:'2',등:'4',대책:'통수 시험 실시, 1시간 이상 누수 모니터링',후가:'1',후심:'1',후등:'1'},
+  ],
+  '기타': [
+    {단계:'①준비',위험:'작업장 이동 중 전도·부상',가:'2',심:'1',등:'2',대책:'안전화·안전모 착용, 정리정돈 후 작업',후가:'1',후심:'1',후등:'1'},
+    {단계:'②작업',위험:'공구 사용 중 손 부상',가:'2',심:'2',등:'4',대책:'안전장갑 착용, 올바른 공구 사용법 준수',후가:'1',후심:'1',후등:'1'},
+    {단계:'③마감',위험:'정리 중 낙하물 부상',가:'2',심:'1',등:'2',대책:'안전모 착용, 낙하방지 조치 후 정리',후가:'1',후심:'1',후등:'1'},
+    {단계:'④완료',위험:'작업 후 미확인 위험 잔존',가:'1',심:'2',등:'2',대책:'최종 점검 체크리스트 확인, 담당자 서명',후가:'1',후심:'1',후등:'1'},
+  ],
+};
+
+// TBM 잠재위험요인 DB
+const TBM_RISK = {
+  '전기':['①충전부 접촉 감전 (고압·특고압)','②LOTO 미실시 전원 재투입 감전','③잔류전하 접촉 감전','④절연 공구 미사용 아크·화재','⑤복전 오류 설비 손상'],
+  '기계·설비':['①회전체·구동부 협착·절단','②LOTO 미실시 불시 기동','③중량물 취급 허리 부상','④공구 낙하 하부 부상','⑤미끄러짐·전도'],
+  '외벽·방수':['①고소작업 추락 사망','②강풍 중 전도·비래','③유기용제 흡입 건강장해','④공구·자재 낙하 하부 부상','⑤우천 시 감전'],
+  '소방':['①소화약제 오방출 질식','②배관 누수 감전','③오발화 화재','④작동시험 중 소음·진동','⑤복구 미완료'],
+  '고소작업':['①비계·사다리 전도 추락 사망','②발판 미끄러짐 추락','③공구·자재 낙하 하부 부상','④강풍(10m/s↑) 전도','⑤안전대 미체결 추락'],
+  '배관·위생':['①잔류 유체 누출 화상','②유기용제 흡입 두통','③용접 불꽃 화재','④배관 파열 수손','⑤밀폐공간 산소결핍'],
+  '기타':['①작업 중 전도·부상','②공구 사용 중 손 부상','③낙하물 부상','④화학물질 접촉','⑤과로·근골격계 부담'],
+};
+
+const TBM_COUNTER = {
+  '전기':['①검전기 무전압 확인, 절연장갑(7kV급)·절연화 착용','②전원 차단·LOTO 실시, 열쇠 책임자 소지','③방전 조치 후 절연고무 방호구 설치','④절연 공구 사용, 금속 액세서리 제거','⑤전기안전관리자 최종 확인 후 복전'],
+  '기계·설비':['①회전체 완전 정지 확인, 안전커버 유지','②전원 차단 LOTO 실시','③2인 1조, 이동 대차 사용','④낙하방지줄 체결, 하부 출입통제','⑤미끄럼방지 안전화, 바닥 정리'],
+  '외벽·방수':['①안전대(전신식) 착용·이중 체결, 2인 1조','②풍속 10m/s↑ 즉시 작업 중지·하강','③방독마스크(유기증기용)·보안경 착용, 강제 환기','④낙하방지줄 체결, 하부 바리케이드·감시원','⑤우천 시 작업 중지, 절연화 착용'],
+  '소방':['①작업 전 소화설비 차단, 전원 공지','②배수 후 작업, 절연장갑 착용','③주변 가연물 제거, 소화기 비치','④귀마개 착용, 충격흡수 자세','⑤복구 체크리스트 확인·서명'],
+  '고소작업':['①안전대(전신식) 착용·앵커 이중 체결','②3점 지지, 미끄럼방지 안전화','③낙하방지줄 체결, 하부 바리케이드·감시원','④풍속 10m/s↑ 즉시 하강','⑤관리자 착용 확인 후 상승 허가'],
+  '배관·위생':['①배관 차단·냉각 확인, 내열장갑·보안경 착용','②방독마스크(유기증기용)·강제 환기','③방화포 설치, 소화기 비치','④통수 시험, 누수 모니터링','⑤산소농도 18% 이상 확인 후 입실'],
+  '기타':['①안전화·안전모 착용, 정리정돈','②안전장갑 착용, 올바른 사용법','③낙하방지 조치, 안전모 착용','④안전보호장갑·보안경 착용','⑤30분 작업 후 10분 휴식'],
+};
+
+function gf(g){const n=parseInt(g);return n>=6?'높음(즉시조치)':n>=3?'보통(주의)':'낮음(허용)';}
+
+// 문서 생성
+function genAll(){
+  const name=document.getElementById('workName').value.trim();
+  if(!name){alert('작업명을 입력하세요.');document.getElementById('workName').focus();return;}
+
+  const btn=document.querySelector('.gen-btn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin">⏳</span> 생성 중...';
+
+  setTimeout(()=>{
+    const date=document.getElementById('workDate').value||new Date().toISOString().slice(0,10);
+    const place=document.getElementById('workPlace').value||'작업장소';
+    const vendor=document.getElementById('workVendor').value||'협력업체';
+    const period=document.getElementById('workPeriod').value||'1일';
+    const type=document.getElementById('workType').value;
+    const note=document.getElementById('workNote').value;
+    const cfg=getOrg();
+
+    const risks=RISK_DB[type]||RISK_DB['기타'];
+    const tbmRisks=TBM_RISK[type]||TBM_RISK['기타'];
+    const tbmCounters=TBM_COUNTER[type]||TBM_COUNTER['기타'];
+    const dateKo=new Date(date).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+
+    // [1] 위험성평가표
+    let r1=`수  시  위  험  성  평  가  표
+${'━'.repeat(60)}
+${cfg.org}  |  ${name}  |  ${date}
+
+【평가기본정보】
+ ○ 평가사유   : ■ 기존 작업에서 신규 작업방법 추가 또는 기존 작업방법 변경
+ ○ 평가자     : ${cfg.leader} (시설팀 반장)
+ ○ 평가공정   : ${name} (${vendor} 외 작업자)
+ ○ 작업일시   : ${dateKo}  09:00 ~ 완료 시까지
+ ○ 작업장소   : ${cfg.org} ${place}
+${note?` ○ 특이사항   : ${note}`:''}
+
+【위험성등급기준】  3×3 = 빈도(가능성) × 강도(중대성)
+ ┌─────────────────────┬───────────┬───────────┬───────────┐
+ │  빈도 × 강도         │ 강도1 경미 │ 강도2 보통 │ 강도3 중대 │
+ ├─────────────────────┼───────────┼───────────┼───────────┤
+ │ 빈도3 자주(주1회↑)   │  3 낮음   │  6 보통   │  9 높음   │
+ │ 빈도2 가끔(월1회)    │  2 낮음   │  4 보통   │  6 보통   │
+ │ 빈도1 드물게(연1회↓) │  1 낮음   │  2 낮음   │  3 낮음   │
+ └─────────────────────┴───────────┴───────────┴───────────┘
+ 판단기준: 7~9점→즉시 작업중지  /  4~6점→1개월 내 개선  /  1~3점→현 수준 유지
+
+【유해·위험요인 파악 및 위험성평가】
+${'─'.repeat(60)}`;
+    risks.forEach((risk,i)=>{
+      r1+=`
+ ${i+1}. 작업단계: ${risk.단계}
+    위험요인 : ${risk.위험}
+    현재위험성: 가능성 ${risk.가} × 심각성 ${risk.심} = ${risk.등}점 [${gf(risk.등)}]
+    개선대책 : ${risk.대책}
+    개선후위험: 가능성 ${risk.후가} × 심각성 ${risk.후심} = ${risk.후등}점 [${gf(risk.후등)}]
+${'─'.repeat(60)}`;
+    });
+    r1+=`
+
+【특이사항】
+ ■ 점검 중 이상 발견(과열·이음·변색 등) 시 즉시 작업중지 후 팀장 보고
+ ■ 본 위험성평가는 TBM 전 작업자 전원 공유·서명 후 작업 개시
+
+【결재】
+ 작  성: ${cfg.leader} (반장)  |  검  토: __________  |  승  인: 시설팀장
+ 시행일: ${date}`;
+
+    // [2] TBM 일지
+    let r2=`< TBM(작업 시작 전 안전 회의) 회의록 >
+${'━'.repeat(60)}
+ 일  시: ${dateKo}  09:00 ~ 09:10       장  소: ${place}
+ 작 업 명: 시설 업무
+ 작업내용: ${name}
+ 위험성평가: ■ 정기평가 포함 실시   □ 수시평가 실시
+ 안전작업허가: ${type==='고소작업'||type==='전기'?'■ 발행':'■ 발행 (해당 시)'}   □ 미발행
+${'─'.repeat(60)}
+
+【잠재위험요인 및 개선대책 사전점검】
+`;
+    tbmRisks.forEach((r,i)=>{
+      r2+=` ${r}\n   → ${tbmCounters[i]}   [예 ✓ / 아니오]\n\n`;
+    });
+    r2+=`${'─'.repeat(60)}
+【중점관리 위험요인】
+ 선  정: ${tbmRisks[0]}
+ 대  책: ${tbmCounters[0]}
+
+【작업 종료 후 미팅】
+ · 작업 결과 및 이상 유무 최종 확인
+ · 개인보호구 반납 및 공구·자재 정리정돈
+ · 이상 발견 사항 즉시 보고 및 조치 확인
+${'─'.repeat(60)}
+【참석자 확인】
+ TBM 리더: 시설팀  반 장  ${cfg.leader} (서명)
+ ┌────────┬──────────┬───────┬────────┬───────┐
+ │ 소  속  │  성  명  │ 확 인 │ 소  속 │ 확 인 │
+ ├────────┼──────────┼───────┼────────┼───────┤
+ │ 시  설  │ ${cfg.elec.padEnd(8)} │ (서명) │        │       │
+ │ 시  설  │ ${cfg.p1.padEnd(8)} │ (서명) │        │       │
+ │ 시  설  │ ${cfg.p2.padEnd(8)} │ (서명) │        │       │
+ │ ${vendor.slice(0,6).padEnd(6)} │          │ (서명) │        │       │
+ └────────┴──────────┴───────┴────────┴───────┘`;
+
+    // [3] 작업완료보고서
+    let r3=`작  업  완  료  보  고  서
+${'━'.repeat(60)}
+${cfg.org}  |  ${name}
+
+ 작업일시: ${dateKo}  09:00 ~ 완료 시까지
+ 작 업 명: ${name}
+ 작업장소: ${cfg.org} ${place}
+ 작업인원: ${cfg.elec}(전기안전관리자), ${cfg.p1}, ${cfg.p2} / ${vendor} — ${period}
+ 작업근거: 시설 정기 유지보수 계획
+${'─'.repeat(60)}
+
+【작업 전 점검 내용】
+ 점검항목                      점검결과              비고
+ ─────────────────────────────────────────────────
+ TBM 실시                     완료 (09:00~09:10)    참석자 서명
+ 위험성평가 공유·서명           완료 (전원 서명 후 개시)
+ 개인보호구 착용 확인           완료
+ 작업구역 출입통제              완료                  감시원 배치
+ 공구·자재 낙하방지 조치        완료
+${'─'.repeat(60)}
+
+【작업 수행 내용】
+ ① 작업 전 TBM 실시 및 위험성평가 공유·서명 (09:00~09:10)
+ ② 개인보호구 착용 확인 및 작업구역 출입통제 조치
+ ③ ${name} 작업 수행
+ ④ 작업 진행 중 이상 유무 지속 모니터링
+ ⑤ 작업 완료 후 결과 육안 확인 및 정상 확인
+ ⑥ 공구·자재 전수 수량 확인 및 정리정돈 완료
+ ⑦ 작업구역 청소 및 출입통제 해제
+ ⑧ 작업 완료 보고 및 담당자 서명
+${'─'.repeat(60)}
+
+【점검 항목별 결과】
+ 항  목                    결  과              비  고
+ ─────────────────────────────────────────────────
+${risks.map(r=>' '+r.위험.slice(0,24).padEnd(26)+'이상 무 확인          정상').join('\n')}
+${'─'.repeat(60)}
+
+【사진 첨부】
+ 구  분      작 업 전              작 업 후
+ ──────────────────────────────────────
+ 작업 현장   [ 사진 첨부 ]         [ 사진 첨부 ]
+ 주요 설비   [ 사진 첨부 ]         [ 사진 첨부 ]
+ 완료 상태   [ 사진 첨부 ]         [ 사진 첨부 ]
+${'─'.repeat(60)}
+
+【특이사항 및 종합의견】
+ 특이사항: 작업 중 안전사고 없음. 이상 무 확인. 정상 완료.
+ 종합의견: ${name}을 안전수칙을 철저히 이행하여 안전하게 완료하였음.
+${note?' 추가사항: '+note:''}
+${'─'.repeat(60)}
+
+【결재】
+ 작  성: ${cfg.leader} (반장)
+ 검  토: ${cfg.elec} (전기안전관리자)
+ 승  인: 시설팀장
+ 시행일: ${date}`;
+
+    document.getElementById('doc0').textContent=r1;
+    document.getElementById('doc1').textContent=r2;
+    document.getElementById('doc2').textContent=r3;
+    [0,1,2].forEach(i=>document.getElementById('btns'+i).style.display='flex');
+
+    btn.disabled=false;
+    btn.innerHTML='⚡ 3종 문서 자동생성';
+    switchTab(0);
+  },800);
+}
+
+function copyDoc(n){
+  const txt=document.getElementById('doc'+n).textContent;
+  navigator.clipboard.writeText(txt).then(()=>alert('✅ 클립보드에 복사되었습니다!\nWord에 붙여넣기 하시면 됩니다.'));
+}
+
+function printDoc(n){
+  const w=window.open('','_blank');
+  const txt=document.getElementById('doc'+n).textContent;
+  w.document.write(`<html><body><pre style="font-family:'맑은 고딕';font-size:12pt;line-height:1.8">${txt}</pre></body></html>`);
+  w.document.close();w.print();
+}
+</script>
+</body>
+</html>
