@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <!-- 대시보드 -->
     <div id="page-dashboard" class="page active">
       <div class="page-title">📊 시설관리 대시보드
-        <span style="font-size:12px;font-weight:400;color:var(--gray3);margin-left:auto">최종 업데이트: 2026년 09월 03일</span>
+        <span style="font-size:12px;font-weight:400;color:var(--gray3);margin-left:auto" id="updateDate">최종 업데이트: </span><script>document.getElementById("updateDate").textContent="최종 업데이트: "+new Date().toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric"});</script>
       </div>
 
       <div class="alert alert-warn">⚠️ <strong>D-28</strong> 냉각탑 수질관리 점검 예정 (2026.07.31) — 위생검사원 일정 확인 필요</div>
