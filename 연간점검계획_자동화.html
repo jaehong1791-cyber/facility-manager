@@ -3,281 +3,111 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>시설관리 프로그램</title>
+<title>연간 점검계획 자동화</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --navy:#1F4E79;--navy2:#2E75B6;--navy3:#D6E4F0;--navy4:#EBF3FB;
-  --green:#1a7f37;--green2:#dafbe1;--green3:#e8f5e9;
-  --red:#cf222e;--red2:#fff0f0;
-  --amber:#9a6700;--amber2:#fff8e1;--amber3:#FFF3E0;
-  --gray:#f7f9fc;--gray2:#e2e8f0;--gray3:#718096;--gray4:#f1f5f9;
-  --text:#1a1a2e;--text2:#4a5568;
-  --r:8px;--sh:0 1px 4px rgba(0,0,0,.08);
+  --green:#1a7f37;--green2:#dafbe1;--red:#cf222e;--red2:#fff0f0;
+  --amber:#9a6700;--amber2:#fff8e1;
+  --gray:#f7f9fc;--gray2:#e2e8f0;--gray3:#718096;
+  --text:#1a1a2e;--r:8px;--sh:0 1px 4px rgba(0,0,0,.08)
 }
 body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;background:#eef2f7;color:var(--text);font-size:13px}
-
-/* 헤더 */
-.hdr{background:var(--navy);color:#fff;padding:0 20px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:300;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.hdr-logo{font-size:15px;font-weight:700}
-.hdr-badge{background:#F0A500;color:#111;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
-.hdr-right{margin-left:auto;display:flex;align-items:center;gap:14px}
-.year-ctrl{display:flex;align-items:center;gap:8px}
-.year-ctrl label{font-size:12px;color:rgba(255,255,255,.7)}
-.year-ctrl input{width:70px;padding:4px 8px;border:1px solid rgba(255,255,255,.3);border-radius:5px;background:rgba(255,255,255,.15);color:#fff;font-size:13px;font-weight:700;text-align:center}
-.btn-gen{background:#F0A500;color:#111;border:none;padding:6px 14px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer}
-.btn-gen:hover{background:#d4920a}
-
-/* 레이아웃 */
-.layout{display:flex;height:calc(100vh - 54px)}
-.sidebar{width:200px;background:#fff;border-right:1px solid var(--gray2);overflow-y:auto;flex-shrink:0;padding:10px 0}
-.nav-lbl{font-size:10px;font-weight:700;color:var(--gray3);letter-spacing:.7px;text-transform:uppercase;padding:8px 16px 4px}
-.nav-btn{width:100%;text-align:left;padding:8px 16px;border:none;background:none;font-family:inherit;font-size:12px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .12s}
-.nav-btn:hover{background:var(--gray4);color:var(--navy)}
+.hdr{background:var(--navy);color:#fff;height:52px;display:flex;align-items:center;padding:0 18px;gap:10px;position:sticky;top:0;z-index:200}
+.hdr-title{font-size:15px;font-weight:700}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.year-box{display:flex;align-items:center;gap:6px}
+.year-box label{font-size:11px;color:rgba(255,255,255,.7)}
+.year-box input{width:68px;padding:4px 8px;border:1px solid rgba(255,255,255,.3);border-radius:5px;background:rgba(255,255,255,.15);color:#fff;font-size:13px;font-weight:700;text-align:center}
+.btn-apply{background:#F0A500;color:#111;border:none;padding:6px 13px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer}
+.layout{display:flex;height:calc(100vh - 52px)}
+.sidebar{width:180px;background:#fff;border-right:1px solid var(--gray2);overflow-y:auto;flex-shrink:0;padding:8px 0}
+.nav-lbl{font-size:10px;font-weight:700;color:var(--gray3);letter-spacing:.7px;padding:8px 14px 3px;text-transform:uppercase}
+.nav-btn{width:100%;text-align:left;padding:8px 14px;border:none;background:none;font-family:inherit;font-size:12px;color:#4a5568;cursor:pointer;display:flex;align-items:center;gap:6px}
+.nav-btn:hover{background:var(--gray)}
 .nav-btn.on{background:var(--navy4);color:var(--navy);font-weight:700}
-.main{flex:1;overflow-y:auto;padding:18px}
-
-/* 페이지 */
+.main{flex:1;overflow-y:auto;padding:16px}
 .pg{display:none}.pg.on{display:block}
 .pg-title{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pg-title .sub{font-size:12px;font-weight:400;color:var(--gray3)}
-
-/* KPI */
-.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
-.kpi{background:#fff;border:1px solid var(--gray2);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
-.kpi-lbl{font-size:11px;color:var(--gray3);font-weight:600;margin-bottom:5px}
-.kpi-val{font-size:24px;font-weight:700;color:var(--navy)}
-.kpi-sub{font-size:11px;color:var(--gray3);margin-top:2px}
-.kpi.danger .kpi-val{color:var(--red)}
-.kpi.warn .kpi-val{color:var(--amber)}
-.kpi.ok .kpi-val{color:var(--green)}
-
 /* 카드 */
 .card{background:#fff;border:1px solid var(--gray2);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
 .card-hdr{background:var(--navy);color:#fff;padding:9px 14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
 .card-hdr.green{background:#2e7d32}
 .card-hdr.amber{background:#e65100}
 .card-body{padding:14px}
-
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--gray2);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
+.kpi-lbl{font-size:11px;color:var(--gray3);font-weight:600;margin-bottom:4px}
+.kpi-val{font-size:22px;font-weight:700;color:var(--navy)}
+.kpi.danger .kpi-val{color:var(--red)}
+.kpi.warn .kpi-val{color:var(--amber)}
+.kpi.ok .kpi-val{color:var(--green)}
 /* 테이블 */
 .tw{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:var(--navy4);color:var(--navy);font-weight:700;padding:7px 8px;text-align:center;border:1px solid var(--gray2);white-space:nowrap;font-size:11px}
-td{padding:6px 8px;border:1px solid var(--gray2);vertical-align:middle}
-tr:hover td{background:#fafbff}
-
+th{background:var(--navy4);color:var(--navy);font-weight:700;padding:7px 8px;text-align:center;border:1px solid var(--gray2);white-space:nowrap}
+td{padding:5px 7px;border:1px solid var(--gray2);vertical-align:middle}
+/* 달력 셀 */
+.mc{text-align:center;padding:4px 2px!important;font-size:11px;font-weight:700}
+.mc-done{background:#bbdefb;color:#0d47a1}
+.mc-plan{background:#c8e6c9;color:#1b5e20}
+.mc-legal{background:#ffe0b2;color:#e65100}
+.mc-over{background:#ffcdd2;color:#b71c1c}
+.mc-now{outline:2px solid var(--red);outline-offset:-1px}
 /* 배지 */
-.bd{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.bd{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px}
 .bd-ok{background:var(--green2);color:var(--green)}
 .bd-warn{background:var(--amber2);color:var(--amber)}
 .bd-danger{background:var(--red2);color:var(--red)}
 .bd-navy{background:var(--navy3);color:var(--navy)}
-.bd-gray{background:var(--gray4);color:var(--gray3)}
 .bd-legal{background:#fce4d6;color:#bf360c;border:1px solid #ffccbc}
-
-/* 달력 셀 */
-.mc{text-align:center;font-size:11px;padding:4px 3px!important;cursor:default}
-.mc-done{background:#bbdefb;color:#0d47a1;font-weight:700}
-.mc-plan{background:#c8e6c9;color:#1b5e20;font-weight:700}
-.mc-legal{background:#ffe0b2;color:#e65100;font-weight:700}
-.mc-warn{background:#ffcdd2;color:#b71c1c;font-weight:700}
-.mc-edu{background:#e1bee7;color:#4a148c;font-weight:700}
-.mc-today{outline:2px solid var(--red);outline-offset:-2px}
-
 /* 알림 */
-.alert{padding:9px 13px;border-radius:var(--r);font-size:12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:7px;border:1px solid}
+.alert{padding:9px 13px;border-radius:var(--r);font-size:12px;margin-bottom:10px;border:1px solid}
 .al-danger{background:var(--red2);border-color:#fca5a5;color:var(--red)}
 .al-warn{background:var(--amber2);border-color:#fde68a;color:var(--amber)}
 .al-ok{background:var(--green2);border-color:#bbf7d0;color:var(--green)}
 .al-info{background:var(--navy4);border-color:var(--navy3);color:var(--navy)}
-
-/* 진행바 */
-.pbar-wrap{margin:3px 0}
-.pbar-bg{background:var(--gray2);border-radius:3px;height:10px;overflow:hidden}
-.pbar-fill{height:100%;border-radius:3px;transition:width .4s}
-
 /* 버튼 */
-.btn{font-family:inherit;font-size:12px;font-weight:600;padding:6px 13px;border-radius:var(--r);border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .12s}
+.btn{font-family:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:var(--r);border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:#153352}
-.btn-sec{background:#fff;color:var(--navy);border:1px solid var(--gray2)}.btn-sec:hover{background:var(--gray4)}
-.btn-success{background:var(--green);color:#fff}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{opacity:.9}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{opacity:.9}
+.btn-sec{background:#fff;color:var(--navy);border:1px solid var(--gray2)}
 .btn-row{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap}
-
 /* 탭 */
-.tabs{display:flex;gap:2px;border-bottom:2px solid var(--gray2);margin-bottom:14px}
-.tab{padding:7px 14px;font-size:12px;font-weight:600;color:var(--gray3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px}
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--gray2);margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:7px 13px;font-size:12px;font-weight:600;color:var(--gray3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit}
 .tab.on{color:var(--navy);border-bottom-color:var(--navy)}
-
-/* 폼 */
-.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
-.fg label{font-size:11px;font-weight:600;color:var(--text2)}
-.fg input,.fg select,.fg textarea{font-family:inherit;font-size:12px;padding:6px 9px;border:1px solid var(--gray2);border-radius:var(--r);outline:none}
-.fg input:focus,.fg select:focus{border-color:var(--navy2)}
-.fgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-
+/* 편집 인풋 */
+.ei{font-family:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--gray2);border-radius:4px;width:100%;outline:none}
+.ei:focus{border-color:var(--navy2)}
+.ei-sm{width:50px}
+.ei-md{width:90px}
+.ei-lg{width:150px}
+.ei-xl{width:200px}
+select.ei{cursor:pointer}
+/* 삭제 버튼 */
+.del-btn{background:#fee2e2;color:#dc2626;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap}
+.del-btn:hover{background:#fca5a5}
 /* 반응형 */
-@media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr)}.fgrid{grid-template-columns:1fr 1fr}}
-@media print{.hdr,.sidebar{display:none!important}.layout{display:block}.main{padding:0}}
-
-/* 스핀 */
-@keyframes spin{to{transform:rotate(360deg)}}
-.spin{display:inline-block;animation:spin .7s linear infinite}
-
-/* 범례 */
-.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;margin-bottom:10px;align-items:center}
-.leg-item{display:flex;align-items:center;gap:4px}
-.leg-dot{width:14px;height:14px;border-radius:3px}
+@media(max-width:800px){.kpi-row{grid-template-columns:repeat(2,1fr)}.sidebar{width:150px}}
 </style>
-
-<script>
-// ── 사업소 설정 초기화 ──────────────────────────────────────
-(function(){
-  const saved = localStorage.getItem('fm_org') ?
-    JSON.parse(localStorage.getItem('fm_org')) : null;
-  if(!saved){
-    // 최초 실행: 설정 팝업
-    document.addEventListener('DOMContentLoaded', function(){
-      showOrgSetup();
-    });
-  }
-})();
-
-function showOrgSetup(){
-  const overlay = document.createElement('div');
-  overlay.id = 'org-setup-overlay';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:"맑은 고딕",sans-serif';
-  overlay.innerHTML = `
-    <div style="background:#fff;border-radius:12px;padding:36px 40px;max-width:440px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2)">
-      <div style="text-align:center;margin-bottom:24px">
-        <div style="font-size:36px;margin-bottom:8px">🏢</div>
-        <h2 style="color:#1F4E79;font-size:18px;margin:0 0 6px">시설관리 프로그램 설정</h2>
-        <p style="color:#718096;font-size:13px;margin:0">최초 1회만 입력하면 이후 자동 저장됩니다.</p>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div>
-          <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">회사명 / 사업소명 *</label>
-          <input id="setup-org" type="text" placeholder="예) 한국마사회시설관리 대구사업소"
-            style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">반장 / 담당자 이름</label>
-          <input id="setup-leader" type="text" placeholder="예) 김재홀"
-            style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">전기안전관리자 이름</label>
-          <input id="setup-elec" type="text" placeholder="예) 이준호"
-            style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:14px;outline:none;box-sizing:border-box">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div>
-            <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">담당자1</label>
-            <input id="setup-p1" type="text" placeholder="예) 배진영"
-              style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box">
-          </div>
-          <div>
-            <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">담당자2</label>
-            <input id="setup-p2" type="text" placeholder="예) 박성웅"
-              style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box">
-          </div>
-        </div>
-      </div>
-      <button onclick="saveOrgSetup()"
-        style="width:100%;margin-top:20px;padding:12px;background:#1F4E79;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer">
-        ✅ 저장하고 시작하기
-      </button>
-      <p style="text-align:center;font-size:12px;color:#a0aec0;margin:12px 0 0">설정은 언제든지 우측 상단 ⚙ 버튼으로 변경 가능합니다</p>
-    </div>`;
-  document.body.appendChild(overlay);
-  setTimeout(()=>document.getElementById('setup-org').focus(),100);
-}
-
-function saveOrgSetup(){
-  const org    = document.getElementById('setup-org').value.trim()    || '우리 사업소';
-  const leader = document.getElementById('setup-leader').value.trim() || '반장';
-  const elec   = document.getElementById('setup-elec').value.trim()   || '전기안전관리자';
-  const p1     = document.getElementById('setup-p1').value.trim()     || '담당자1';
-  const p2     = document.getElementById('setup-p2').value.trim()     || '담당자2';
-  const cfg = {org,leader,elec,p1,p2};
-  localStorage.setItem('fm_org', JSON.stringify(cfg));
-  document.getElementById('org-setup-overlay')?.remove();
-  applyOrgName(cfg);
-  location.reload();
-}
-
-function getOrg(){
-  try{ return JSON.parse(localStorage.getItem('fm_org'))||{org:'우리 사업소',leader:'반장',elec:'전기안전관리자',p1:'담당자1',p2:'담당자2'}; }
-  catch(e){ return {org:'우리 사업소',leader:'반장',elec:'전기안전관리자',p1:'담당자1',p2:'담당자2'}; }
-}
-
-function applyOrgName(cfg){
-  cfg = cfg || getOrg();
-  // 페이지 내 텍스트 치환
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  while(walker.nextNode()){
-    const n = walker.currentNode;
-    if(n.nodeValue.includes('한국마사회시설관리 대구사업소') ||
-       n.nodeValue.includes('대구사업소') ||
-       n.nodeValue.includes('KRA 대구지사 빌딩')){
-      n.nodeValue = n.nodeValue
-        .replace(/한국마사회시설관리 대구사업소/g, cfg.org)
-        .replace(/KRA 대구지사 빌딩/g, cfg.org)
-        .replace(/대구사업소/g, cfg.org);
-    }
-    if(n.nodeValue.includes('김재홀')||n.nodeValue.includes('김 재 홀')){
-      n.nodeValue=n.nodeValue.replace(/김 재 홀/g,cfg.leader).replace(/김재홀/g,cfg.leader);
-    }
-    if(n.nodeValue.includes('이준호')||n.nodeValue.includes('이 준 호')){
-      n.nodeValue=n.nodeValue.replace(/이 준 호/g,cfg.elec).replace(/이준호/g,cfg.elec);
-    }
-    if(n.nodeValue.includes('배진영')){
-      n.nodeValue=n.nodeValue.replace(/배진영/g,cfg.p1);
-    }
-    if(n.nodeValue.includes('박성웅')){
-      n.nodeValue=n.nodeValue.replace(/박성웅/g,cfg.p2);
-    }
-  }
-  // title도 교체
-  document.title = document.title.replace(/대구사업소|한국마사회시설관리 대구사업소|KRA 대구지사 빌딩/g, cfg.org);
-}
-
-// 설정 버튼 추가
-function addSettingBtn(){
-  const cfg=getOrg();
-  const btn=document.createElement('button');
-  btn.innerHTML='⚙ '+cfg.org;
-  btn.style.cssText='position:fixed;bottom:20px;right:20px;background:#1F4E79;color:#fff;border:none;padding:10px 16px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.2)';
-  btn.onclick=()=>{ localStorage.removeItem('fm_org'); location.reload(); };
-  btn.title='클릭하면 사업소 설정 재입력';
-  document.body.appendChild(btn);
-  // 이름 적용
-  applyOrgName(cfg);
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  const cfg = getOrg();
-  if(cfg.org !== '우리 사업소'){
-    applyOrgName(cfg);
-    addSettingBtn();
-  } else {
-    showOrgSetup();
-  }
-});
-</script>
 </head>
 <body>
 
 <header class="hdr">
-  <span style="font-size:18px">🏢</span>
-  <span class="hdr-logo">KRA 대구지사 빌딩 — 연간 점검보수 계획 자동화</span>
-  <span class="hdr-badge">AUTO</span>
+  <span style="font-size:18px">📅</span>
+  <span class="hdr-title">연간 점검계획 자동화</span>
   <div class="hdr-right">
-    <div class="year-ctrl">
+    <div class="year-box">
       <label>관리연도</label>
       <input type="number" id="yearInput" value="2026" min="2020" max="2040">
     </div>
-    <button class="btn-gen" onclick="rebuildAll()">🔄 연도 적용</button>
-    <button class="btn-gen" style="background:#fff;color:#111" onclick="exportExcel()">📥 Excel 저장</button>
+    <button class="btn-apply" onclick="rebuildAll()">🔄 적용</button>
+    <button class="btn-apply" style="background:#fff" onclick="exportCSV()">📥 Excel</button>
   </div>
 </header>
 
@@ -294,65 +124,62 @@ document.addEventListener('DOMContentLoaded', function(){
   <button class="nav-btn" onclick="goPage('legal-elec')"><span>📋</span>법정점검 현황</button>
   <div class="nav-lbl">교육관리</div>
   <button class="nav-btn" onclick="goPage('edu')"><span>🎓</span>자격·교육 관리</button>
-  <div class="nav-lbl">설정</div>
-  <button class="nav-btn" onclick="goPage('settings')"><span>⚙️</span>기준일 설정</button>
+  <div class="nav-lbl">항목 편집</div>
+  <button class="nav-btn" onclick="goPage('edit-legal')"><span>✏️</span>법정점검 편집</button>
+  <button class="nav-btn" onclick="goPage('edit-plan')"><span>✏️</span>계획항목 편집</button>
 </nav>
 
 <main class="main">
 
 <!-- 대시보드 -->
 <div id="pg-dash" class="pg on">
-  <div class="pg-title">📊 연간 점검보수 현황 대시보드 <span class="sub" id="dashYear"></span></div>
+  <div class="pg-title">📊 연간 점검보수 현황 <span class="sub" id="dashYear"></span></div>
   <div id="dashAlerts"></div>
   <div class="kpi-row" id="dashKPI"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-    <div class="card">
-      <div class="card-hdr">🚨 임박 법정점검 (90일 이내)</div>
-      <div class="card-body tw"><table><thead><tr><th>항목</th><th>분류</th><th>기한</th><th>D-Day</th><th>담당</th></tr></thead><tbody id="dashLegal"></tbody></table></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card"><div class="card-hdr">🚨 임박 법정점검 (90일 이내)</div>
+      <div class="card-body tw"><table><thead><tr><th>항목</th><th>기한</th><th>D-Day</th><th>담당</th></tr></thead><tbody id="dashLegal"></tbody></table></div>
     </div>
-    <div class="card">
-      <div class="card-hdr">📅 이번 달 점검 예정</div>
-      <div class="card-body tw"><table><thead><tr><th>항목</th><th>분류</th><th>주기</th><th>구분</th></tr></thead><tbody id="dashMonth"></tbody></table></div>
+    <div class="card"><div class="card-hdr">📅 이번 달 점검 예정</div>
+      <div class="card-body tw"><table><thead><tr><th>항목</th><th>주기</th><th>구분</th></tr></thead><tbody id="dashMonth"></tbody></table></div>
     </div>
   </div>
-  <div class="card" style="margin-top:14px">
-    <div class="card-hdr">📈 월별 점검 부하 현황</div>
-    <div class="card-body" id="dashBarChart"></div>
+  <div class="card" style="margin-top:12px"><div class="card-hdr">📈 월별 점검 부하</div>
+    <div class="card-body" id="dashBar"></div>
   </div>
 </div>
 
 <!-- D-Day 알림 -->
 <div id="pg-alert" class="pg">
-  <div class="pg-title">🚨 D-Day 자동 알림 <span class="sub">법정점검 기한 초과·임박 경보</span></div>
+  <div class="pg-title">🚨 D-Day 자동 알림</div>
   <div id="alertList"></div>
 </div>
 
 <!-- 기계설비 계획표 -->
 <div id="pg-mech" class="pg">
   <div class="pg-title">⚙️ 기계설비 연간 점검보수 계획표 <span class="sub" id="mechYear"></span></div>
-  <div class="legend">
-    <div class="leg-item"><div class="leg-dot" style="background:#bbdefb"></div>완료(◎)</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#c8e6c9"></div>계획(●)</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#ffe0b2"></div>법정(★)</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#ffcdd2"></div>기한초과(⚠)</div>
+  <div style="display:flex;gap:10px;margin-bottom:8px;font-size:11px;flex-wrap:wrap">
+    <span style="background:#bbdefb;color:#0d47a1;padding:2px 7px;border-radius:3px;font-weight:700">◎ 완료</span>
+    <span style="background:#c8e6c9;color:#1b5e20;padding:2px 7px;border-radius:3px;font-weight:700">● 계획</span>
+    <span style="background:#ffe0b2;color:#e65100;padding:2px 7px;border-radius:3px;font-weight:700">★ 법정</span>
+    <span style="background:#ffcdd2;color:#b71c1c;padding:2px 7px;border-radius:3px;font-weight:700">⚠ 기한초과</span>
   </div>
   <div class="card"><div class="card-body tw"><table id="mechTable"></table></div></div>
 </div>
 
 <!-- 기계 법정점검 -->
 <div id="pg-legal-mech" class="pg">
-  <div class="pg-title">📋 기계설비 법정점검 현황 <span class="sub">기한·담당·지적사항 통합 관리</span></div>
+  <div class="pg-title">📋 기계설비 법정점검 현황</div>
   <div class="card"><div class="card-body tw"><table id="legalMechTable"></table></div></div>
 </div>
 
 <!-- 전기설비 계획표 -->
 <div id="pg-elec" class="pg">
   <div class="pg-title">⚡ 전기설비 연간 점검보수 계획표 <span class="sub" id="elecYear"></span></div>
-  <div class="legend">
-    <div class="leg-item"><div class="leg-dot" style="background:#bbdefb"></div>완료(◎)</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#c8e6c9"></div>계획(●)</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#ffe0b2"></div>법정(★)</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#ffcdd2"></div>기한초과(⚠)</div>
+  <div style="display:flex;gap:10px;margin-bottom:8px;font-size:11px;flex-wrap:wrap">
+    <span style="background:#bbdefb;color:#0d47a1;padding:2px 7px;border-radius:3px;font-weight:700">◎ 완료</span>
+    <span style="background:#c8e6c9;color:#1b5e20;padding:2px 7px;border-radius:3px;font-weight:700">● 계획</span>
+    <span style="background:#ffe0b2;color:#e65100;padding:2px 7px;border-radius:3px;font-weight:700">★ 법정</span>
   </div>
   <div class="card"><div class="card-body tw"><table id="elecTable"></table></div></div>
 </div>
@@ -369,456 +196,236 @@ document.addEventListener('DOMContentLoaded', function(){
   <div class="card"><div class="card-body tw"><table id="eduTable"></table></div></div>
 </div>
 
-<!-- 설정 -->
-<div id="pg-settings" class="pg">
-  <div class="pg-title">⚙️ 법정점검 기준일 설정</div>
-  <div class="alert al-info">💡 마지막 시행일을 입력하면 다음 기한이 자동 계산됩니다. 연도가 바뀌어도 주기 로직은 그대로 유지됩니다.</div>
-  <div class="card"><div class="card-hdr card-hdr">⚙️ 기계설비 법정점검 기준일</div><div class="card-body" id="settingsMech"></div></div>
-  <div class="card"><div class="card-hdr">⚡ 전기설비 법정점검 기준일</div><div class="card-body" id="settingsElec"></div></div>
-  <div class="card"><div class="card-hdr">🎓 교육·자격 기준일</div><div class="card-body" id="settingsEdu"></div></div>
-  <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">💾 저장 및 적용</button></div>
+<!-- 법정점검 편집 -->
+<div id="pg-edit-legal" class="pg">
+  <div class="pg-title">✏️ 법정점검 항목 편집 <span class="sub">추가·수정·삭제 후 저장하면 즉시 반영</span></div>
+  <div class="alert al-info">💡 항목을 직접 추가·수정·삭제하세요. [💾 저장 및 반영] 클릭 시 계획표·D-Day에 즉시 적용됩니다.</div>
+  <div class="tabs">
+    <button class="tab on" onclick="switchLTab(this,'lt','lt0')">⚙️ 기계설비</button>
+    <button class="tab" onclick="switchLTab(this,'lt','lt1')">⚡ 전기설비</button>
+    <button class="tab" onclick="switchLTab(this,'lt','lt2')">🎓 교육·자격</button>
+  </div>
+  <div id="lt0" class="lt">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addLegal('mech')">➕ 항목 추가</button>
+      <button class="btn btn-success" onclick="saveLegal()">💾 저장 및 반영</button>
+    </div>
+    <div class="card"><div class="card-body tw">
+      <table><thead><tr><th>점검명</th><th>법적근거</th><th>주기</th><th>단위</th><th>마지막시행일</th><th>담당업체</th><th>담당자</th><th>분류</th><th>삭제</th></tr></thead>
+      <tbody id="tbMech"></tbody></table>
+    </div></div>
+  </div>
+  <div id="lt1" class="lt" style="display:none">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addLegal('elec')">➕ 항목 추가</button>
+      <button class="btn btn-success" onclick="saveLegal()">💾 저장 및 반영</button>
+    </div>
+    <div class="card"><div class="card-body tw">
+      <table><thead><tr><th>점검명</th><th>법적근거</th><th>주기</th><th>단위</th><th>마지막시행일</th><th>담당업체</th><th>담당자</th><th>분류</th><th>삭제</th></tr></thead>
+      <tbody id="tbElec"></tbody></table>
+    </div></div>
+  </div>
+  <div id="lt2" class="lt" style="display:none">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addLegal('edu')">➕ 항목 추가</button>
+      <button class="btn btn-success" onclick="saveLegal()">💾 저장 및 반영</button>
+    </div>
+    <div class="card"><div class="card-body tw">
+      <table><thead><tr><th>교육명</th><th>법적근거</th><th>주기</th><th>단위</th><th>마지막이수일</th><th>대상자</th><th>비고</th><th>삭제</th></tr></thead>
+      <tbody id="tbEdu"></tbody></table>
+    </div></div>
+  </div>
+</div>
+
+<!-- 계획항목 편집 -->
+<div id="pg-edit-plan" class="pg">
+  <div class="pg-title">✏️ 계획항목 편집 <span class="sub">월별 계획표 항목 추가·수정·삭제</span></div>
+  <div class="alert al-info">💡 실시월: M1=1월, M3=3월, M3,M6,M9,M12=분기, MONTHLY=매월, WEEKLY=매주, DAILY=매일</div>
+  <div class="tabs">
+    <button class="tab on" onclick="switchLTab(this,'pt','pt0')">⚙️ 기계설비</button>
+    <button class="tab" onclick="switchLTab(this,'pt','pt1')">⚡ 전기설비</button>
+  </div>
+  <div id="pt0" class="pt">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addPlan('mech')">➕ 항목 추가</button>
+      <button class="btn btn-success" onclick="savePlan()">💾 저장 및 반영</button>
+    </div>
+    <div class="card"><div class="card-body tw">
+      <table><thead><tr><th>시설물명</th><th>세부내용</th><th>주기</th><th>실시월</th><th>법정</th><th>법정ID</th><th>삭제</th></tr></thead>
+      <tbody id="tbMechPlan"></tbody></table>
+    </div></div>
+  </div>
+  <div id="pt1" class="pt" style="display:none">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addPlan('elec')">➕ 항목 추가</button>
+      <button class="btn btn-success" onclick="savePlan()">💾 저장 및 반영</button>
+    </div>
+    <div class="card"><div class="card-body tw">
+      <table><thead><tr><th>시설물명</th><th>세부내용</th><th>주기</th><th>실시월</th><th>법정</th><th>법정ID</th><th>삭제</th></tr></thead>
+      <tbody id="tbElecPlan"></tbody></table>
+    </div></div>
+  </div>
 </div>
 
 </main>
 </div>
 
 <script>
-// ── 전역 설정 ──────────────────────────────────────────────
+// ── 전역 ──────────────────────────────────────────────────
 let YEAR = 2026;
-const TODAY = new Date(2026, 6, 4); // 현재 날짜 기준
+const TODAY = new Date();
 
-// ── 기준 데이터 (마지막 시행일 + 주기 → 다음 기한 자동계산) ──
-const SETTINGS = {
-  mech: [
-    {id:'boiler-open',   name:'보일러 개방검사',          basis:'에너지이용합리화법',  cycle:1, unit:'year', lastDate:'2025-11-20', vendor:'에너지공단',   person:'김재홍', cat:'기계'},
-    {id:'fire-comp',     name:'소방 종합정밀점검',         basis:'화재예방법 제22조',   cycle:1, unit:'year', lastDate:'2025-06-05', vendor:'소방안전(주)', person:'배진영', cat:'소방'},
-    {id:'fire-op',       name:'소방 작동기능점검',         basis:'화재예방법 제22조',   cycle:1, unit:'year', lastDate:'2025-12-03', vendor:'소방안전(주)', person:'배진영', cat:'소방'},
-    {id:'gas-check',     name:'가스 정기점검',             basis:'도시가스사업법',       cycle:1, unit:'year', lastDate:'2026-01-15', vendor:'도시가스공사', person:'김재홍', cat:'가스'},
-    {id:'water-clean',   name:'물탱크 청소',               basis:'공중위생법',           cycle:6, unit:'month',lastDate:'2025-12-10', vendor:'위생업체',    person:'배진영', cat:'위생'},
-    {id:'water-clean2',  name:'물탱크 청소(하반기)',       basis:'공중위생법',           cycle:6, unit:'month',lastDate:'2025-06-12', vendor:'위생업체',    person:'배진영', cat:'위생'},
-    {id:'water-qual',    name:'수질검사',                  basis:'수도법',               cycle:1, unit:'year', lastDate:'2025-06-24', vendor:'수질검사소',  person:'배진영', cat:'위생'},
-    {id:'air-qual',      name:'주차장 공기질 측정',        basis:'실내공기질관리법',     cycle:1, unit:'year', lastDate:'2025-06-12', vendor:'환경검사원',  person:'김재홍', cat:'환경'},
-    {id:'air-emit',      name:'대기배출시설 측정(상)',     basis:'대기환경보전법',       cycle:6, unit:'month',lastDate:'2025-06-12', vendor:'측정업체',    person:'배진영', cat:'환경'},
-    {id:'air-emit2',     name:'대기배출시설 측정(하)',     basis:'대기환경보전법',       cycle:6, unit:'month',lastDate:'2025-12-10', vendor:'측정업체',    person:'배진영', cat:'환경'},
-    {id:'mech-perf',     name:'기계설비 성능점검',         basis:'기계설비법',           cycle:1, unit:'year', lastDate:'2025-04-09', vendor:'설비업체',    person:'김재홍', cat:'기계'},
-    {id:'bldg-safe',     name:'건물 안전진단(상)',         basis:'건축법 제35조',        cycle:6, unit:'month',lastDate:'2025-03-27', vendor:'건축안전원',  person:'김재홍', cat:'건축'},
-    {id:'bldg-safe2',    name:'건물 안전진단(하)',         basis:'건축법 제35조',        cycle:6, unit:'month',lastDate:'2025-11-20', vendor:'건축안전원',  person:'김재홍', cat:'건축'},
-    {id:'bldg-mgmt',     name:'건축물 유지관리 정기점검',  basis:'건축법 제35조',        cycle:2, unit:'year', lastDate:'2025-08-07', vendor:'달성군청',    person:'김재홍', cat:'건축'},
-    {id:'pest',          name:'방역(전층)',                basis:'감염병예방법',          cycle:1, unit:'year', lastDate:'2025-10-01', vendor:'방역업체',    person:'배진영', cat:'위생'},
+// ── 기본 데이터 ───────────────────────────────────────────
+const DEFAULT_SETTINGS = {
+  mech:[
+    {id:'boiler-open', name:'보일러 개방검사',         basis:'에너지이용합리화법', cycle:1, unit:'year',  lastDate:'2025-11-20', vendor:'에너지공단',   person:'김재홍', cat:'기계'},
+    {id:'fire-comp',   name:'소방 종합정밀점검',        basis:'화재예방법 제22조',  cycle:1, unit:'year',  lastDate:'2025-06-05', vendor:'소방안전(주)', person:'배진영', cat:'소방'},
+    {id:'fire-op',     name:'소방 작동기능점검',        basis:'화재예방법 제22조',  cycle:1, unit:'year',  lastDate:'2025-12-03', vendor:'소방안전(주)', person:'배진영', cat:'소방'},
+    {id:'gas-check',   name:'가스 정기점검',            basis:'도시가스사업법',     cycle:1, unit:'year',  lastDate:'2026-01-15', vendor:'도시가스공사', person:'김재홍', cat:'가스'},
+    {id:'water-clean', name:'물탱크 청소',              basis:'공중위생법',         cycle:6, unit:'month', lastDate:'2025-12-10', vendor:'위생업체',    person:'배진영', cat:'위생'},
+    {id:'water-clean2',name:'물탱크 청소(하반기)',      basis:'공중위생법',         cycle:6, unit:'month', lastDate:'2025-06-12', vendor:'위생업체',    person:'배진영', cat:'위생'},
+    {id:'water-qual',  name:'수질검사',                 basis:'수도법',             cycle:1, unit:'year',  lastDate:'2025-06-24', vendor:'수질검사소',  person:'배진영', cat:'위생'},
+    {id:'air-qual',    name:'주차장 공기질 측정',       basis:'실내공기질관리법',   cycle:1, unit:'year',  lastDate:'2025-06-12', vendor:'환경검사원',  person:'김재홍', cat:'환경'},
+    {id:'air-emit',    name:'대기배출시설 측정(상)',    basis:'대기환경보전법',     cycle:6, unit:'month', lastDate:'2025-06-12', vendor:'측정업체',    person:'배진영', cat:'환경'},
+    {id:'air-emit2',   name:'대기배출시설 측정(하)',    basis:'대기환경보전법',     cycle:6, unit:'month', lastDate:'2025-12-10', vendor:'측정업체',    person:'배진영', cat:'환경'},
+    {id:'mech-perf',   name:'기계설비 성능점검',        basis:'기계설비법',         cycle:1, unit:'year',  lastDate:'2025-04-09', vendor:'설비업체',    person:'김재홍', cat:'기계'},
+    {id:'bldg-safe',   name:'건물 안전진단(상)',        basis:'건축법 제35조',      cycle:6, unit:'month', lastDate:'2025-03-27', vendor:'건축안전원',  person:'김재홍', cat:'건축'},
+    {id:'bldg-safe2',  name:'건물 안전진단(하)',        basis:'건축법 제35조',      cycle:6, unit:'month', lastDate:'2025-11-20', vendor:'건축안전원',  person:'김재홍', cat:'건축'},
+    {id:'bldg-mgmt',   name:'건축물 유지관리점검',     basis:'건축법 제35조',      cycle:2, unit:'year',  lastDate:'2025-08-07', vendor:'달성군청',    person:'김재홍', cat:'건축'},
+    {id:'pest',        name:'방역(전층)',               basis:'감염병예방법',        cycle:1, unit:'year',  lastDate:'2025-10-01', vendor:'방역업체',    person:'배진영', cat:'위생'},
   ],
-  elec: [
-    {id:'elec-safe',     name:'전기안전진단 정기검사',     basis:'전기사업법 제63조',    cycle:3, unit:'year', lastDate:'2025-09-16', vendor:'전기안전공사',person:'이준호', cat:'전기'},
-    {id:'elev1-ins',     name:'승강기 정기검사(1호기)',    basis:'승강기안전관리법',     cycle:1, unit:'year', lastDate:'2025-07-23', vendor:'승강기관리원',person:'이준호', cat:'승강기'},
-    {id:'elev2-ins',     name:'승강기 정기검사(2호기)',    basis:'승강기안전관리법',     cycle:1, unit:'year', lastDate:'2025-07-23', vendor:'승강기관리원',person:'이준호', cat:'승강기'},
-    {id:'ups-ins',       name:'UPS 정기검사',             basis:'전기용품안전법',        cycle:1, unit:'year', lastDate:'2025-06-12', vendor:'UPS업체',     person:'이준호', cat:'전기'},
+  elec:[
+    {id:'elec-safe',   name:'전기안전진단 정기검사',   basis:'전기사업법 제63조',  cycle:3, unit:'year',  lastDate:'2025-09-16', vendor:'전기안전공사', person:'이준호', cat:'전기'},
+    {id:'elev1-ins',   name:'승강기 정기검사(1호기)',  basis:'승강기안전관리법',   cycle:1, unit:'year',  lastDate:'2025-07-23', vendor:'승강기관리원', person:'이준호', cat:'승강기'},
+    {id:'elev2-ins',   name:'승강기 정기검사(2호기)',  basis:'승강기안전관리법',   cycle:1, unit:'year',  lastDate:'2025-07-23', vendor:'승강기관리원', person:'이준호', cat:'승강기'},
+    {id:'ups-ins',     name:'UPS 정기검사',            basis:'전기용품안전법',     cycle:1, unit:'year',  lastDate:'2025-06-12', vendor:'UPS업체',     person:'이준호', cat:'전기'},
   ],
-  edu: [
-    {id:'edu-mech',    name:'기계설비 유지관리자 교육(김재홍)', basis:'기계설비법',      cycle:3, unit:'year', lastDate:'2023-03-25', person:'김재홍', note:'임시수첩 만료 2026.4'},
-    {id:'edu-mech2',   name:'기계설비 유지관리자 선임(배진영)', basis:'기계설비법',      cycle:3, unit:'year', lastDate:'2026-04-01', person:'배진영', note:'2026.4.1 선임'},
-    {id:'edu-gas-k',   name:'가스 법정교육(김재홍)',            basis:'도시가스사업법',  cycle:3, unit:'year', lastDate:'2026-01-03', person:'김재홍', note:'차기 2029년'},
-    {id:'edu-gas-b',   name:'가스 법정교육(배진영)',            basis:'도시가스사업법',  cycle:3, unit:'year', lastDate:'2024-01-01', person:'배진영', note:'차기 2027년 예정'},
-    {id:'edu-boil-k',  name:'보일러 검사대상기기 교육(김재홍)','basis':'에너지이용합리화법',cycle:3,unit:'year',lastDate:'2026-03-05',person:'김재홍',note:'차기 2029년'},
-    {id:'edu-boil-b',  name:'보일러 교육(배진영)',              basis:'에너지이용합리화법',cycle:3,unit:'year',lastDate:'2024-01-01', person:'배진영', note:'차기 2027년 예정'},
-    {id:'edu-elec-l',  name:'전기안전관리자 선임교육(이준호)',  basis:'전기사업법',      cycle:3, unit:'year', lastDate:'2026-02-12', person:'이준호', note:'차기 2029년'},
-    {id:'edu-elev-l',  name:'승강기 교육(이준호)',              basis:'승강기안전관리법',cycle:3, unit:'year', lastDate:'2025-12-18', person:'이준호', note:'차기 2028년'},
-    {id:'edu-elev-e',  name:'승강기 비상구출운전 교육(이준호)', basis:'승강기안전관리법',cycle:3, unit:'year', lastDate:'2025-09-13', person:'이준호', note:'차기 2028년'},
+  edu:[
+    {id:'edu-mech',   name:'기계설비 유지관리자 교육(김재홍)', basis:'기계설비법',         cycle:3, unit:'year', lastDate:'2023-03-25', person:'김재홍', note:'임시수첩 만료 2026.4'},
+    {id:'edu-mech2',  name:'기계설비 유지관리자 선임(배진영)', basis:'기계설비법',         cycle:3, unit:'year', lastDate:'2026-04-01', person:'배진영', note:'2026.4.1 선임'},
+    {id:'edu-gas-k',  name:'가스 법정교육(김재홍)',            basis:'도시가스사업법',     cycle:3, unit:'year', lastDate:'2026-01-03', person:'김재홍', note:'차기 2029년'},
+    {id:'edu-gas-b',  name:'가스 법정교육(배진영)',            basis:'도시가스사업법',     cycle:3, unit:'year', lastDate:'2024-01-01', person:'배진영', note:'차기 2027년 예정'},
+    {id:'edu-boil-k', name:'보일러 교육(김재홍)',              basis:'에너지이용합리화법', cycle:3, unit:'year', lastDate:'2026-03-05', person:'김재홍', note:'차기 2029년'},
+    {id:'edu-boil-b', name:'보일러 교육(배진영)',              basis:'에너지이용합리화법', cycle:3, unit:'year', lastDate:'2024-01-01', person:'배진영', note:'차기 2027년 예정'},
+    {id:'edu-elec-l', name:'전기안전관리자 선임교육(이준호)',  basis:'전기사업법',         cycle:3, unit:'year', lastDate:'2026-02-12', person:'이준호', note:'차기 2029년'},
+    {id:'edu-elev-l', name:'승강기 교육(이준호)',              basis:'승강기안전관리법',   cycle:3, unit:'year', lastDate:'2025-12-18', person:'이준호', note:'차기 2028년'},
+    {id:'edu-elev-e', name:'승강기 비상구출운전 교육(이준호)', basis:'승강기안전관리법',   cycle:3, unit:'year', lastDate:'2025-09-13', person:'이준호', note:'차기 2028년'},
   ]
 };
 
-// 기계설비 점검 항목 (주기별 일정)
-const MECH_ITEMS = [
-  {name:'기계설비 성능점검',    sub:'해당장비',           cycle:'년1회',     plan:'M3',      legal:false},
-  {name:'냉온수기',             sub:'300RT 2대 세관',     cycle:'년1회',     plan:'M4,M10',  legal:false},
-  {name:'냉각탑',               sub:'약품투입(8주)',       cycle:'하절기',    plan:'M5,M6,M7,M8',legal:false},
-  {name:'보일러 세관',          sub:'1톤 1대',            cycle:'년1회',     plan:'M11',     legal:false},
-  {name:'보일러 개방검사',      sub:'법정',               cycle:'년1회',     plan:'M11',     legal:true,  legalId:'boiler-open'},
-  {name:'공조기 필터 교체',     sub:'9대',                cycle:'년1회',     plan:'M2,M6',   legal:false},
-  {name:'공조기 필터 청소',     sub:'분기',               cycle:'분기',      plan:'M3,M6,M9,M12',legal:false},
-  {name:'공기순환기 필터',      sub:'6대',                cycle:'년1회',     plan:'M4',      legal:false},
-  {name:'에어컨 세관세척',      sub:'공냉56/수냉19대',    cycle:'년1회',     plan:'M4',      legal:false},
-  {name:'에어컨 필터청소',      sub:'분기',               cycle:'분기',      plan:'M3,M6,M9,M12',legal:false},
-  {name:'소방 자체점검',        sub:'월1회',              cycle:'월1회',     plan:'MONTHLY', legal:false},
-  {name:'소방 종합정밀점검',    sub:'법정',               cycle:'년1회',     plan:'M6',      legal:true,  legalId:'fire-comp'},
-  {name:'소방 작동기능점검',    sub:'법정',               cycle:'년1회',     plan:'M12',     legal:true,  legalId:'fire-op'},
-  {name:'가스 자체누설점검',    sub:'월1회',              cycle:'월1회',     plan:'MONTHLY', legal:false},
-  {name:'가스 정기점검',        sub:'법정',               cycle:'년1회',     plan:'M1',      legal:true,  legalId:'gas-check'},
-  {name:'물탱크 청소',          sub:'저수조 100톤 법정',  cycle:'반기',      plan:'M6,M12',  legal:true,  legalId:'water-clean'},
-  {name:'수질검사',             sub:'법정',               cycle:'년1회',     plan:'M6',      legal:true,  legalId:'water-qual'},
-  {name:'건물 안전진단',        sub:'법정',               cycle:'반기',      plan:'M3,M9',   legal:true,  legalId:'bldg-safe'},
-  {name:'건축물 유지관리점검',  sub:'2년1회 법정',        cycle:'2년',       plan:'M8',      legal:true,  legalId:'bldg-mgmt'},
-  {name:'방역(전층)',           sub:'년5회',              cycle:'년5회',     plan:'M2,M4,M7,M9,M11',legal:true,legalId:'pest'},
-  {name:'오수펌프 점검',        sub:'지하2층 2대',        cycle:'매일',      plan:'DAILY',   legal:false},
-  {name:'배수펌프 점검',        sub:'지하2층 6대',        cycle:'매일',      plan:'DAILY',   legal:false},
-  {name:'배기팬 청소',          sub:'주4/화1/흡16대',     cycle:'분기',      plan:'M3,M6,M9,M12',legal:false},
-  {name:'공기질 측정',          sub:'주차장 법정',        cycle:'년1회',     plan:'M6',      legal:true,  legalId:'air-qual'},
-  {name:'대기배출시설 측정',    sub:'냉온수기/보일러 법정',cycle:'반기',     plan:'M6,M12',  legal:true,  legalId:'air-emit'},
+const DEFAULT_MECH = [
+  {name:'기계설비 성능점검',   sub:'해당장비',           cycle:'년1회',  plan:'M3',              legal:false},
+  {name:'냉온수기',            sub:'300RT 2대 세관',     cycle:'년1회',  plan:'M4,M10',          legal:false},
+  {name:'냉각탑',              sub:'약품투입(8주)',       cycle:'하절기', plan:'M5,M6,M7,M8',     legal:false},
+  {name:'보일러 세관',         sub:'1톤 1대',            cycle:'년1회',  plan:'M11',             legal:false},
+  {name:'보일러 개방검사',     sub:'법정',               cycle:'년1회',  plan:'M11',             legal:true,  legalId:'boiler-open'},
+  {name:'공조기 필터 교체',    sub:'9대',                cycle:'년1회',  plan:'M2,M6',           legal:false},
+  {name:'공조기 필터 청소',    sub:'분기',               cycle:'분기',   plan:'M3,M6,M9,M12',    legal:false},
+  {name:'소방 자체점검',       sub:'월1회',              cycle:'월1회',  plan:'MONTHLY',         legal:false},
+  {name:'소방 종합정밀점검',   sub:'법정',               cycle:'년1회',  plan:'M6',              legal:true,  legalId:'fire-comp'},
+  {name:'소방 작동기능점검',   sub:'법정',               cycle:'년1회',  plan:'M12',             legal:true,  legalId:'fire-op'},
+  {name:'가스 자체누설점검',   sub:'월1회',              cycle:'월1회',  plan:'MONTHLY',         legal:false},
+  {name:'가스 정기점검',       sub:'법정',               cycle:'년1회',  plan:'M1',              legal:true,  legalId:'gas-check'},
+  {name:'물탱크 청소',         sub:'저수조 100톤 법정',  cycle:'반기',   plan:'M6,M12',          legal:true,  legalId:'water-clean'},
+  {name:'수질검사',            sub:'법정',               cycle:'년1회',  plan:'M6',              legal:true,  legalId:'water-qual'},
+  {name:'건물 안전진단',       sub:'법정',               cycle:'반기',   plan:'M3,M9',           legal:true,  legalId:'bldg-safe'},
+  {name:'건축물 유지관리점검', sub:'2년1회 법정',        cycle:'2년',    plan:'M8',              legal:true,  legalId:'bldg-mgmt'},
+  {name:'방역(전층)',          sub:'년5회',              cycle:'년5회',  plan:'M2,M4,M7,M9,M11', legal:true,  legalId:'pest'},
+  {name:'오수펌프 점검',       sub:'지하2층 2대',        cycle:'매일',   plan:'DAILY',           legal:false},
+  {name:'배수펌프 점검',       sub:'지하2층 6대',        cycle:'매일',   plan:'DAILY',           legal:false},
+  {name:'공기질 측정',         sub:'주차장 법정',        cycle:'년1회',  plan:'M6',              legal:true,  legalId:'air-qual'},
+  {name:'대기배출시설 측정',   sub:'반기 법정',          cycle:'반기',   plan:'M6,M12',          legal:true,  legalId:'air-emit'},
 ];
 
-const ELEC_ITEMS = [
-  {name:'수배전 정밀점검',      sub:'년1회',              cycle:'년1회',     plan:'M6',      legal:false},
-  {name:'분전반 월간점검',      sub:'전층',               cycle:'월1회',     plan:'MONTHLY', legal:false},
-  {name:'분전반 주간점검',      sub:'전층',               cycle:'주1회',     plan:'WEEKLY',  legal:false},
-  {name:'발전기 점검·시운전',   sub:'월2회',              cycle:'월2회',     plan:'MONTHLY', legal:false},
-  {name:'수신기 점검(소방)',     sub:'전기소방/기계소방',  cycle:'반기',      plan:'M6,M12',  legal:true,  legalId:'fire-comp'},
-  {name:'MCC 점검',             sub:'반기(5월말/10월초)', cycle:'반기',      plan:'M5,M10',  legal:false},
-  {name:'절연저항·접지저항 측정',sub:'년1회',             cycle:'년1회',     plan:'M9',      legal:false},
-  {name:'전기설비 정기검사',    sub:'법정 3년 주기',      cycle:'3년',       plan:'TRIENNIAL',legal:true, legalId:'elec-safe'},
-  {name:'승강기 정기검사(1호)', sub:'법정 년1회',         cycle:'년1회',     plan:'M7',      legal:true,  legalId:'elev1-ins'},
-  {name:'승강기 정기검사(2호)', sub:'법정 년1회',         cycle:'년1회',     plan:'M7',      legal:true,  legalId:'elev2-ins'},
-  {name:'UPS 정기검사',         sub:'법정',               cycle:'년1회',     plan:'M6',      legal:true,  legalId:'ups-ins'},
-  {name:'열화상 측정',          sub:'전기실 분기',         cycle:'분기',      plan:'M3,M6,M9,M12',legal:false},
-  {name:'전기설비점검결과기록', sub:'전층 월간',          cycle:'월1회',     plan:'MONTHLY', legal:false},
-  {name:'예비발전설비 점검기록',sub:'발전기실 분기',       cycle:'분기',      plan:'M3,M6,M9,M12',legal:false},
-  {name:'저압전기설비 기록',    sub:'반기',               cycle:'반기',      plan:'M6,M12',  legal:false},
-  {name:'고압전기설비 기록',    sub:'반기',               cycle:'반기',      plan:'M6,M12',  legal:false},
-  {name:'변압기 점검',          sub:'전기실 년1회',       cycle:'년1회',     plan:'M12',     legal:false},
-  {name:'계전기·차단기동작시험',sub:'전기실 년1회',       cycle:'년1회',     plan:'M6',      legal:false},
+const DEFAULT_ELEC = [
+  {name:'수배전 정밀점검',      sub:'년1회',             cycle:'년1회',  plan:'M6',              legal:false},
+  {name:'분전반 월간점검',      sub:'전층',              cycle:'월1회',  plan:'MONTHLY',         legal:false},
+  {name:'발전기 점검·시운전',   sub:'월2회',             cycle:'월2회',  plan:'MONTHLY',         legal:false},
+  {name:'수신기 점검(소방)',     sub:'반기',              cycle:'반기',   plan:'M6,M12',          legal:true,  legalId:'fire-comp'},
+  {name:'MCC 점검',             sub:'반기',              cycle:'반기',   plan:'M5,M10',          legal:false},
+  {name:'절연저항·접지저항 측정',sub:'년1회',            cycle:'년1회',  plan:'M9',              legal:false},
+  {name:'전기안전진단 정기검사', sub:'법정 3년 주기',    cycle:'3년',    plan:'TRIENNIAL',       legal:true,  legalId:'elec-safe'},
+  {name:'승강기 정기검사(1호)', sub:'법정 년1회',        cycle:'년1회',  plan:'M7',              legal:true,  legalId:'elev1-ins'},
+  {name:'승강기 정기검사(2호)', sub:'법정 년1회',        cycle:'년1회',  plan:'M7',              legal:true,  legalId:'elev2-ins'},
+  {name:'UPS 정기검사',         sub:'법정',              cycle:'년1회',  plan:'M6',              legal:true,  legalId:'ups-ins'},
+  {name:'열화상 측정',          sub:'전기실 분기',       cycle:'분기',   plan:'M3,M6,M9,M12',    legal:false},
+  {name:'변압기 점검',          sub:'전기실 년1회',      cycle:'년1회',  plan:'M12',             legal:false},
+  {name:'계전기·차단기동작시험',sub:'전기실 년1회',      cycle:'년1회',  plan:'M6',              legal:false},
 ];
 
-// ── 날짜 계산 유틸 ────────────────────────────────────────
-function addPeriod(dateStr, cycle, unit) {
-  const d = new Date(dateStr);
-  if(unit==='year')  d.setFullYear(d.getFullYear()+cycle);
+// 실제 사용 데이터 (localStorage 우선)
+let SETTINGS, MECH_ITEMS, ELEC_ITEMS;
+
+// ── localStorage 로드/저장 ────────────────────────────────
+function loadData(){
+  try{
+    SETTINGS = JSON.parse(localStorage.getItem('fm_settings')) || JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    MECH_ITEMS = JSON.parse(localStorage.getItem('fm_mech')) || JSON.parse(JSON.stringify(DEFAULT_MECH));
+    ELEC_ITEMS = JSON.parse(localStorage.getItem('fm_elec')) || JSON.parse(JSON.stringify(DEFAULT_ELEC));
+  }catch(e){
+    SETTINGS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    MECH_ITEMS = JSON.parse(JSON.stringify(DEFAULT_MECH));
+    ELEC_ITEMS = JSON.parse(JSON.stringify(DEFAULT_ELEC));
+  }
+}
+function saveData(){
+  localStorage.setItem('fm_settings', JSON.stringify(SETTINGS));
+  localStorage.setItem('fm_mech', JSON.stringify(MECH_ITEMS));
+  localStorage.setItem('fm_elec', JSON.stringify(ELEC_ITEMS));
+}
+
+// ── 날짜 유틸 ────────────────────────────────────────────
+function addPeriod(ds,cycle,unit){
+  const d=new Date(ds);
+  if(unit==='year') d.setFullYear(d.getFullYear()+cycle);
   if(unit==='month') d.setMonth(d.getMonth()+cycle);
   return d;
 }
-function fmtDate(d){ return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`; }
-function diffDays(d){ return Math.ceil((new Date(d)-TODAY)/(1000*60*60*24)); }
-function ddayBadge(d){
+function fmtDate(d){return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;}
+function diffDays(d){return Math.ceil((new Date(d)-TODAY)/(1000*60*60*24));}
+function ddayBd(d){
   const dd=diffDays(d);
-  if(dd<0)  return `<span class="bd bd-danger">D+${Math.abs(dd)} 초과</span>`;
-  if(dd===0)return `<span class="bd bd-danger">D-Day</span>`;
-  if(dd<=30)return `<span class="bd bd-danger">D-${dd}</span>`;
-  if(dd<=90)return `<span class="bd bd-warn">D-${dd}</span>`;
+  if(dd<0) return `<span class="bd bd-danger">D+${Math.abs(dd)} 초과</span>`;
+  if(dd===0) return `<span class="bd bd-danger">D-Day</span>`;
+  if(dd<=30) return `<span class="bd bd-danger">D-${dd}</span>`;
+  if(dd<=90) return `<span class="bd bd-warn">D-${dd}</span>`;
   return `<span class="bd bd-ok">D-${dd}</span>`;
 }
 
-// 해당 연도에 점검이 있는지 (법정점검 기준)
-function getLegalNextDate(id){
+function getLegalNext(id){
   const all=[...SETTINGS.mech,...SETTINGS.elec,...SETTINGS.edu];
   const s=all.find(x=>x.id===id);
   if(!s) return null;
-  return addPeriod(s.lastDate, s.cycle, s.unit);
+  return addPeriod(s.lastDate,s.cycle,s.unit);
 }
 
-// 월별 계획 파싱
-function parsePlan(plan, year){
-  const months=[];
-  if(plan==='MONTHLY') return Array.from({length:12},(_,i)=>i+1);
-  if(plan==='WEEKLY')  return Array.from({length:12},(_,i)=>i+1);
-  if(plan==='DAILY')   return Array.from({length:12},(_,i)=>i+1);
+function parsePlan(plan){
+  if(plan==='MONTHLY'||plan==='WEEKLY'||plan==='DAILY') return Array.from({length:12},(_,i)=>i+1);
   if(plan==='TRIENNIAL'){
-    // 3년 주기 — 마지막 시행 연도 기반
-    const item=SETTINGS.elec.find(x=>x.id==='elec-safe');
-    if(item){ const nxt=addPeriod(item.lastDate,item.cycle,item.unit); if(nxt.getFullYear()===year) return [nxt.getMonth()+1]; }
+    const s=SETTINGS.elec.find(x=>x.id==='elec-safe');
+    if(s){const nxt=addPeriod(s.lastDate,s.cycle,s.unit);if(nxt.getFullYear()===YEAR)return[nxt.getMonth()+1];}
     return [];
   }
-  plan.split(',').forEach(p=>{
-    const m=parseInt(p.replace('M',''));
-    if(!isNaN(m)) months.push(m);
-  });
-  return months;
+  return plan.split(',').map(p=>parseInt(p.replace('M',''))).filter(n=>!isNaN(n));
 }
 
-// 법정점검 해당 연도 월 반환
-function getLegalMonth(id, year){
-  const d=getLegalNextDate(id);
-  if(!d) return null;
-  if(d.getFullYear()===year) return d.getMonth()+1;
-  // 연간 주기면 해당연도에도 있음
+function getLegalMonth(id){
+  const nxt=getLegalNext(id);
+  if(!nxt) return [];
+  if(nxt.getFullYear()===YEAR) return [nxt.getMonth()+1];
+  // 반기 주기
   const s=[...SETTINGS.mech,...SETTINGS.elec].find(x=>x.id===id);
-  if(s && s.unit==='month' && s.cycle<=6){
+  if(s&&s.unit==='month'&&s.cycle<=6){
     const months=[];
     let cur=new Date(s.lastDate);
     for(let i=0;i<24;i++){
       cur=addPeriod(cur.toISOString().slice(0,10),s.cycle,s.unit);
-      if(cur.getFullYear()===year) months.push(cur.getMonth()+1);
-      if(cur.getFullYear()>year) break;
+      if(cur.getFullYear()===YEAR) months.push(cur.getMonth()+1);
+      if(cur.getFullYear()>YEAR) break;
     }
-    return months.length===1?months[0]:months;
+    return months;
   }
-  return null;
-}
-
-// ── 계획표 렌더 ────────────────────────────────────────────
-function renderPlanTable(items, tableId){
-  const tbl=document.getElementById(tableId);
-  const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  let html=`<thead><tr>
-    <th style="min-width:160px;text-align:left">시설물</th>
-    <th style="min-width:100px">세 부</th>
-    <th>점검주기</th>
-    ${months.map(m=>`<th style="min-width:36px">${m}</th>`).join('')}
-  </tr></thead><tbody>`;
-
-  items.forEach(item=>{
-    const planMonths=parsePlan(item.plan, YEAR);
-    let legalMonths=[];
-    if(item.legal && item.legalId){
-      const lm=getLegalMonth(item.legalId, YEAR);
-      if(Array.isArray(lm)) legalMonths=lm;
-      else if(lm) legalMonths=[lm];
-    }
-
-    const monthCells=Array.from({length:12},(_,i)=>{
-      const m=i+1;
-      const isPlan=planMonths.includes(m);
-      const isLegal=legalMonths.includes(m);
-      const isThisMonth=(m===TODAY.getMonth()+1 && YEAR===TODAY.getFullYear());
-
-      if(isLegal){
-        const nxt=getLegalNextDate(item.legalId);
-        const dd=nxt?diffDays(nxt.toISOString().slice(0,10)):999;
-        const cls=dd<0?'mc mc-warn':dd<=30?'mc mc-warn':'mc mc-legal';
-        return `<td class="${cls}${isThisMonth?' mc-today':''}">★</td>`;
-      }
-      if(isPlan){
-        return `<td class="mc mc-plan${isThisMonth?' mc-today':''}">●</td>`;
-      }
-      return `<td class="mc${isThisMonth?' mc-today':''}"></td>`;
-    }).join('');
-
-    const legalBadge=item.legal?`<span class="bd bd-legal">법정</span>`:'';
-    html+=`<tr>
-      <td style="font-weight:${item.legal?'700':'400'};color:${item.legal?'var(--navy)':'inherit'}">${item.name} ${legalBadge}</td>
-      <td style="font-size:11px;color:var(--gray3)">${item.sub}</td>
-      <td style="text-align:center;font-size:11px">${item.cycle}</td>
-      ${monthCells}
-    </tr>`;
-  });
-  html+='</tbody>';
-  tbl.innerHTML=html;
-}
-
-// ── 법정점검 현황 테이블 ──────────────────────────────────
-function renderLegalTable(items, tableId){
-  const tbl=document.getElementById(tableId);
-  let html=`<thead><tr><th>점검항목</th><th>법적근거</th><th>주기</th><th>마지막 시행일</th><th>다음 기한</th><th>D-Day</th><th>담당자</th><th>담당업체</th><th>분류</th></tr></thead><tbody>`;
-  items.forEach(s=>{
-    const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
-    const dd=diffDays(nxt.toISOString().slice(0,10));
-    html+=`<tr>
-      <td><strong>${s.name}</strong></td>
-      <td style="font-size:11px;color:var(--gray3)">${s.basis}</td>
-      <td style="text-align:center">${s.cycle}${s.unit==='year'?'년':'개월'}</td>
-      <td style="text-align:center">${s.lastDate}</td>
-      <td style="text-align:center;font-weight:700;color:${dd<0?'var(--red)':dd<=90?'var(--amber)':'var(--green)'}">${fmtDate(nxt)}</td>
-      <td style="text-align:center">${ddayBadge(nxt.toISOString().slice(0,10))}</td>
-      <td style="text-align:center">${s.person}</td>
-      <td>${s.vendor||'-'}</td>
-      <td style="text-align:center"><span class="bd bd-navy">${s.cat}</span></td>
-    </tr>`;
-  });
-  html+='</tbody>';
-  tbl.innerHTML=html;
-}
-
-// ── 교육관리 테이블 ───────────────────────────────────────
-function renderEduTable(){
-  const tbl=document.getElementById('eduTable');
-  let html=`<thead><tr><th>교육/자격명</th><th>법적근거</th><th>주기</th><th>최종이수일</th><th>다음 기한</th><th>D-Day</th><th>대상자</th><th>비고</th></tr></thead><tbody>`;
-  SETTINGS.edu.forEach(s=>{
-    const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
-    const dd=diffDays(nxt.toISOString().slice(0,10));
-    html+=`<tr>
-      <td><strong>${s.name}</strong></td>
-      <td style="font-size:11px;color:var(--gray3)">${s.basis}</td>
-      <td style="text-align:center">${s.cycle}${s.unit==='year'?'년':'개월'}</td>
-      <td style="text-align:center">${s.lastDate}</td>
-      <td style="text-align:center;font-weight:700;color:${dd<0?'var(--red)':dd<=90?'var(--amber)':'var(--green)'}">${fmtDate(nxt)}</td>
-      <td style="text-align:center">${ddayBadge(nxt.toISOString().slice(0,10))}</td>
-      <td style="text-align:center">${s.person}</td>
-      <td style="font-size:11px;color:var(--gray3)">${s.note||''}</td>
-    </tr>`;
-  });
-  html+='</tbody>';
-  tbl.innerHTML=html;
-}
-
-// ── 대시보드 ─────────────────────────────────────────────
-function renderDash(){
-  document.getElementById('dashYear').textContent=`${YEAR}년 기준`;
-  document.getElementById('mechYear').textContent=`${YEAR}년`;
-  document.getElementById('elecYear').textContent=`${YEAR}년`;
-
-  const allLegal=[...SETTINGS.mech,...SETTINGS.elec];
-  const alerts=[];
-  let overdue=0,danger=0,warn=0,ok=0;
-
-  allLegal.forEach(s=>{
-    const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
-    const dd=diffDays(nxt.toISOString().slice(0,10));
-    if(dd<0){overdue++;alerts.push({...s,dd,nxt});}
-    else if(dd<=30){danger++;alerts.push({...s,dd,nxt});}
-    else if(dd<=90){warn++;alerts.push({...s,dd,nxt});}
-    else ok++;
-  });
-
-  // KPI
-  document.getElementById('dashKPI').innerHTML=`
-    <div class="kpi${overdue?'danger':''}"><div class="kpi-lbl">기한 초과</div><div class="kpi-val">${overdue}</div><div class="kpi-sub">즉시 조치 필요</div></div>
-    <div class="kpi${danger?'warn':'ok'}"><div class="kpi-lbl">30일 이내</div><div class="kpi-val">${danger}</div><div class="kpi-sub">긴급 관리</div></div>
-    <div class="kpi${warn?'warn':''}"><div class="kpi-lbl">90일 이내</div><div class="kpi-val">${warn}</div><div class="kpi-sub">사전 준비</div></div>
-    <div class="kpi ok"><div class="kpi-lbl">여유 있음</div><div class="kpi-val">${ok}</div><div class="kpi-sub">정상 관리</div></div>
-    <div class="kpi"><div class="kpi-lbl">교육·자격</div><div class="kpi-val">${SETTINGS.edu.length}</div><div class="kpi-sub">관리 항목</div></div>
-  `;
-
-  // 알림
-  const dashAlerts=document.getElementById('dashAlerts');
-  const over=alerts.filter(a=>a.dd<0);
-  const d30=alerts.filter(a=>a.dd>=0&&a.dd<=30);
-  let alertHtml='';
-  over.forEach(a=>alertHtml+=`<div class="alert al-danger">🚨 <strong>[기한 초과 D+${Math.abs(a.dd)}]</strong> ${a.name} — 기한: ${fmtDate(a.nxt)} / 담당: ${a.person} / ${a.vendor||''} → 즉시 조치 필요!</div>`);
-  d30.forEach(a=>alertHtml+=`<div class="alert al-warn">⚠️ <strong>[D-${a.dd}]</strong> ${a.name} — 기한: ${fmtDate(a.nxt)} / 담당: ${a.person} / ${a.vendor||''}</div>`);
-  dashAlerts.innerHTML=alertHtml;
-
-  // 임박 법정점검 표
-  const sorted=alerts.sort((a,b)=>a.dd-b.dd).slice(0,10);
-  document.getElementById('dashLegal').innerHTML=sorted.map(a=>`<tr>
-    <td><strong>${a.name}</strong></td>
-    <td><span class="bd bd-navy">${a.cat}</span></td>
-    <td style="text-align:center;font-weight:700">${fmtDate(a.nxt)}</td>
-    <td style="text-align:center">${ddayBadge(a.nxt.toISOString().slice(0,10))}</td>
-    <td>${a.person}</td>
-  </tr>`).join('');
-
-  // 이번 달 예정
-  const curMonth=TODAY.getMonth()+1;
-  const thisMonthItems=[];
-  [...MECH_ITEMS,...ELEC_ITEMS].forEach(item=>{
-    const pm=parsePlan(item.plan,YEAR);
-    if(pm.includes(curMonth)){
-      thisMonthItems.push({name:item.name,cat:item.legal?'법정':'자체',cycle:item.cycle,legal:item.legal});
-    }
-  });
-  document.getElementById('dashMonth').innerHTML=thisMonthItems.map(i=>`<tr>
-    <td><strong>${i.name}</strong></td>
-    <td><span class="bd bd-navy">${i.cat==='법정'?'기계':'전기'}</span></td>
-    <td style="text-align:center;font-size:11px">${i.cycle}</td>
-    <td style="text-align:center">${i.legal?'<span class="bd bd-legal">법정</span>':'<span class="bd bd-gray">자체</span>'}</td>
-  </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--gray3)">이번 달 예정 없음</td></tr>';
-
-  // 월별 부하 차트
-  const monthLoad=Array(12).fill(0);
-  [...MECH_ITEMS,...ELEC_ITEMS].forEach(item=>{
-    const pm=parsePlan(item.plan,YEAR);
-    pm.forEach(m=>monthLoad[m-1]++);
-  });
-  const maxLoad=Math.max(...monthLoad);
-  const mNames=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  document.getElementById('dashBarChart').innerHTML=monthLoad.map((v,i)=>{
-    const pct=maxLoad?Math.round(v/maxLoad*100):0;
-    const isNow=(i===TODAY.getMonth()&&YEAR===TODAY.getFullYear());
-    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-      <span style="width:32px;font-size:11px;color:var(--gray3);text-align:right">${mNames[i]}</span>
-      <div class="pbar-bg" style="flex:1"><div class="pbar-fill" style="width:${pct}%;background:${isNow?'var(--red)':'var(--navy2)'};height:18px"></div></div>
-      <span style="width:30px;font-size:11px;color:var(--text2);font-weight:${isNow?'700':'400'}">${v}건${isNow?' ◀':''}</span>
-    </div>`;
-  }).join('');
-}
-
-// ── D-Day 알림 페이지 ─────────────────────────────────────
-function renderAlerts(){
-  const all=[...SETTINGS.mech,...SETTINGS.elec,...SETTINGS.edu];
-  const items=all.map(s=>{
-    const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
-    return {...s,nxt,dd:diffDays(nxt.toISOString().slice(0,10))};
-  }).sort((a,b)=>a.dd-b.dd);
-
-  const groups={
-    '🚨 기한 초과 — 즉시 조치':items.filter(i=>i.dd<0),
-    '🔴 30일 이내 — 긴급':items.filter(i=>i.dd>=0&&i.dd<=30),
-    '🟠 31~90일 — 주의':items.filter(i=>i.dd>30&&i.dd<=90),
-    '🟢 91일 이상 — 여유':items.filter(i=>i.dd>90),
-  };
-
-  let html='';
-  Object.entries(groups).forEach(([title,list])=>{
-    if(!list.length) return;
-    const cls=title.includes('초과')?'al-danger':title.includes('30일')?'al-danger':title.includes('90일')?'al-warn':'al-ok';
-    html+=`<div class="card"><div class="card-hdr">${title} (${list.length}건)</div><div class="card-body tw">
-      <table><thead><tr><th>항목</th><th>마지막시행</th><th>다음기한</th><th>D-Day</th><th>담당자</th><th>업체/비고</th></tr></thead><tbody>
-      ${list.map(s=>`<tr>
-        <td><strong>${s.name}</strong></td>
-        <td style="text-align:center">${s.lastDate}</td>
-        <td style="text-align:center;font-weight:700">${fmtDate(s.nxt)}</td>
-        <td style="text-align:center">${ddayBadge(s.nxt.toISOString().slice(0,10))}</td>
-        <td style="text-align:center">${s.person}</td>
-        <td style="font-size:11px;color:var(--gray3)">${s.vendor||s.note||''}</td>
-      </tr>`).join('')}
-      </tbody></table>
-    </div></div>`;
-  });
-  document.getElementById('alertList').innerHTML=html;
-}
-
-// ── 설정 페이지 ───────────────────────────────────────────
-function renderSettings(){
-  function buildForm(items, containerId){
-    const el=document.getElementById(containerId);
-    el.innerHTML=items.map(s=>`
-      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;align-items:center;padding:8px;background:var(--gray4);border-radius:6px">
-        <div style="font-size:12px;font-weight:600">${s.name}</div>
-        <div class="fg" style="margin:0"><label>마지막 시행일</label><input type="date" id="s_${s.id}" value="${s.lastDate}"></div>
-        <div style="font-size:11px;color:var(--gray3)">주기: ${s.cycle}${s.unit==='year'?'년':'개월'}</div>
-        <div style="font-size:11px;color:var(--navy);font-weight:700" id="s_next_${s.id}"></div>
-      </div>`).join('');
-    // 다음 기한 미리보기
-    items.forEach(s=>{
-      const input=document.getElementById(`s_${s.id}`);
-      const preview=document.getElementById(`s_next_${s.id}`);
-      const update=()=>{
-        try{const nxt=addPeriod(input.value,s.cycle,s.unit);preview.textContent='→ '+fmtDate(nxt);}catch(e){}
-      };
-      update();input.addEventListener('change',update);
-    });
-  }
-  buildForm(SETTINGS.mech,'settingsMech');
-  buildForm(SETTINGS.elec,'settingsElec');
-  buildForm(SETTINGS.edu,'settingsEdu');
-}
-
-function saveSettings(){
-  [...SETTINGS.mech,...SETTINGS.elec,...SETTINGS.edu].forEach(s=>{
-    const input=document.getElementById(`s_${s.id}`);
-    if(input) s.lastDate=input.value;
-  });
-  rebuildAll();
-  alert('✅ 저장 완료! 전체 계획표가 자동 업데이트 되었습니다.');
-}
-
-// ── Excel 내보내기 ────────────────────────────────────────
-function exportExcel(){
-  const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  let csv=`KRA 대구지사 빌딩 ${YEAR}년 연간 점검보수 계획표\n\n`;
-  csv+=`[기계설비]\n시설물,세부,주기,${months.join(',')}\n`;
-  MECH_ITEMS.forEach(item=>{
-    const pm=parsePlan(item.plan,YEAR);
-    const cells=Array.from({length:12},(_,i)=>{
-      if(item.legal){const lm=getLegalMonth(item.legalId,YEAR);if(Array.isArray(lm)?lm.includes(i+1):lm===i+1)return '★법정';}
-      return pm.includes(i+1)?'●':'';
-    });
-    csv+=`${item.name},${item.sub},${item.cycle},${cells.join(',')}\n`;
-  });
-  csv+=`\n[전기설비]\n시설물,세부,주기,${months.join(',')}\n`;
-  ELEC_ITEMS.forEach(item=>{
-    const pm=parsePlan(item.plan,YEAR);
-    const cells=Array.from({length:12},(_,i)=>{
-      if(item.legal){const lm=getLegalMonth(item.legalId,YEAR);if(Array.isArray(lm)?lm.includes(i+1):lm===i+1)return '★법정';}
-      return pm.includes(i+1)?'●':'';
-    });
-    csv+=`${item.name},${item.sub},${item.cycle},${cells.join(',')}\n`;
-  });
-  csv+=`\n[법정점검 기한]\n항목,법적근거,주기,마지막시행일,다음기한,담당자,담당업체\n`;
-  [...SETTINGS.mech,...SETTINGS.elec].forEach(s=>{
-    const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
-    csv+=`${s.name},${s.basis},${s.cycle}${s.unit==='year'?'년':'개월'},${s.lastDate},${fmtDate(nxt)},${s.person},${s.vendor||''}\n`;
-  });
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`대구사업소_${YEAR}년_연간점검계획표.csv`;
-  a.click();
+  return [];
 }
 
 // ── 네비게이션 ────────────────────────────────────────────
@@ -829,6 +436,328 @@ function goPage(id){
   document.querySelectorAll('.nav-btn').forEach(b=>{
     if(b.getAttribute('onclick')===`goPage('${id}')`) b.classList.add('on');
   });
+  if(id==='edit-legal') renderEditLegal();
+  if(id==='edit-plan') renderEditPlan();
+}
+
+function switchLTab(btn,cls,target){
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.'+cls).forEach(el=>el.style.display='none');
+  document.getElementById(target).style.display='block';
+}
+
+// ── 계획표 렌더 ───────────────────────────────────────────
+function renderPlan(items, tblId){
+  const tbl=document.getElementById(tblId);
+  const mn=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  let h=`<thead><tr><th style="min-width:140px;text-align:left">시설물</th><th>세부</th><th>주기</th>`;
+  mn.forEach(m=>h+=`<th style="min-width:32px">${m}</th>`);
+  h+='</tr></thead><tbody>';
+  items.forEach(item=>{
+    const pm=parsePlan(item.plan);
+    const lm=item.legal&&item.legalId?getLegalMonth(item.legalId):[];
+    const cells=Array.from({length:12},(_,i)=>{
+      const m=i+1;
+      const isNow=(m===TODAY.getMonth()+1&&YEAR===TODAY.getFullYear());
+      const nowCls=isNow?' mc-now':'';
+      if(lm.includes(m)){
+        const nxt=getLegalNext(item.legalId);
+        const over=nxt&&diffDays(nxt.toISOString().slice(0,10))<0;
+        return `<td class="mc ${over?'mc-over':'mc-legal'}${nowCls}">★</td>`;
+      }
+      if(pm.includes(m)) return `<td class="mc mc-plan${nowCls}">●</td>`;
+      return `<td class="mc${nowCls}"></td>`;
+    }).join('');
+    const lb=item.legal?`<span class="bd bd-legal" style="font-size:9px">법정</span>`:'';
+    h+=`<tr><td style="font-weight:${item.legal?700:400};color:${item.legal?'var(--navy)':'inherit'};font-size:12px">${item.name} ${lb}</td>
+      <td style="font-size:11px;color:var(--gray3)">${item.sub}</td>
+      <td style="text-align:center;font-size:11px">${item.cycle}</td>${cells}</tr>`;
+  });
+  tbl.innerHTML=h+'</tbody>';
+}
+
+// ── 법정점검 테이블 렌더 ──────────────────────────────────
+function renderLegal(items, tblId){
+  const tbl=document.getElementById(tblId);
+  let h=`<thead><tr><th>점검항목</th><th>법적근거</th><th>주기</th><th>마지막시행일</th><th>다음기한</th><th>D-Day</th><th>담당자</th><th>담당업체</th><th>분류</th></tr></thead><tbody>`;
+  items.forEach((s,i)=>{
+    const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
+    const dd=diffDays(nxt.toISOString().slice(0,10));
+    h+=`<tr style="background:${i%2===0?'#f8faff':'#fff'}">
+      <td><strong>${s.name}</strong></td>
+      <td style="font-size:11px;color:var(--gray3)">${s.basis}</td>
+      <td style="text-align:center">${s.cycle}${s.unit==='year'?'년':'개월'}</td>
+      <td style="text-align:center">${s.lastDate}</td>
+      <td style="text-align:center;font-weight:700;color:${dd<0?'var(--red)':dd<=90?'var(--amber)':'var(--green)'}">${fmtDate(nxt)}</td>
+      <td style="text-align:center">${ddayBd(nxt.toISOString().slice(0,10))}</td>
+      <td style="text-align:center">${s.person||'-'}</td>
+      <td>${s.vendor||'-'}</td>
+      <td style="text-align:center"><span class="bd bd-navy">${s.cat||'-'}</span></td>
+    </tr>`;
+  });
+  tbl.innerHTML=h+'</tbody>';
+}
+
+// ── 교육 테이블 ───────────────────────────────────────────
+function renderEdu(){
+  const tbl=document.getElementById('eduTable');
+  let h=`<thead><tr><th>교육/자격명</th><th>법적근거</th><th>주기</th><th>최종이수일</th><th>다음기한</th><th>D-Day</th><th>대상자</th><th>비고</th></tr></thead><tbody>`;
+  SETTINGS.edu.forEach((s,i)=>{
+    const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
+    const dd=diffDays(nxt.toISOString().slice(0,10));
+    h+=`<tr style="background:${i%2===0?'#f8faff':'#fff'}">
+      <td><strong>${s.name}</strong></td>
+      <td style="font-size:11px;color:var(--gray3)">${s.basis}</td>
+      <td style="text-align:center">${s.cycle}년</td>
+      <td style="text-align:center">${s.lastDate}</td>
+      <td style="text-align:center;font-weight:700;color:${dd<0?'var(--red)':dd<=90?'var(--amber)':'var(--green)'}">${fmtDate(nxt)}</td>
+      <td style="text-align:center">${ddayBd(nxt.toISOString().slice(0,10))}</td>
+      <td style="text-align:center">${s.person||'-'}</td>
+      <td style="font-size:11px;color:var(--gray3)">${s.note||''}</td>
+    </tr>`;
+  });
+  tbl.innerHTML=h+'</tbody>';
+}
+
+// ── 대시보드 ──────────────────────────────────────────────
+function renderDash(){
+  document.getElementById('dashYear').textContent=`${YEAR}년 기준`;
+  document.getElementById('mechYear').textContent=`${YEAR}년`;
+  document.getElementById('elecYear').textContent=`${YEAR}년`;
+
+  const all=[...SETTINGS.mech,...SETTINGS.elec,...SETTINGS.edu];
+  let overdue=0,d30=0,d90=0,ok=0;
+  const alerts=[];
+  all.forEach(s=>{
+    const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
+    const dd=diffDays(nxt.toISOString().slice(0,10));
+    if(dd<0){overdue++;alerts.push({...s,dd,nxt});}
+    else if(dd<=30){d30++;alerts.push({...s,dd,nxt});}
+    else if(dd<=90){d90++;alerts.push({...s,dd,nxt});}
+    else ok++;
+  });
+
+  document.getElementById('dashKPI').innerHTML=`
+    <div class="kpi${overdue?' danger':''}"><div class="kpi-lbl">기한 초과</div><div class="kpi-val">${overdue}</div></div>
+    <div class="kpi${d30?' danger':''}"><div class="kpi-lbl">30일 이내</div><div class="kpi-val">${d30}</div></div>
+    <div class="kpi${d90?' warn':''}"><div class="kpi-lbl">90일 이내</div><div class="kpi-val">${d90}</div></div>
+    <div class="kpi ok"><div class="kpi-lbl">여유 있음</div><div class="kpi-val">${ok}</div></div>
+    <div class="kpi"><div class="kpi-lbl">교육·자격</div><div class="kpi-val">${SETTINGS.edu.length}</div></div>`;
+
+  const sorted=alerts.sort((a,b)=>a.dd-b.dd).slice(0,8);
+  document.getElementById('dashLegal').innerHTML=sorted.map(a=>`<tr>
+    <td><strong style="font-size:12px">${a.name}</strong></td>
+    <td style="text-align:center;font-size:11px">${fmtDate(a.nxt)}</td>
+    <td style="text-align:center">${ddayBd(a.nxt.toISOString().slice(0,10))}</td>
+    <td style="font-size:11px">${a.person||'-'}</td>
+  </tr>`).join('');
+
+  const cm=TODAY.getMonth()+1;
+  const thisMonth=[];
+  [...MECH_ITEMS,...ELEC_ITEMS].forEach(item=>{
+    if(parsePlan(item.plan).includes(cm)) thisMonth.push(item);
+  });
+  document.getElementById('dashMonth').innerHTML=thisMonth.map(i=>`<tr>
+    <td><strong style="font-size:12px">${i.name}</strong></td>
+    <td style="font-size:11px">${i.cycle}</td>
+    <td>${i.legal?'<span class="bd bd-legal" style="font-size:10px">법정</span>':'<span class="bd bd-navy" style="font-size:10px">자체</span>'}</td>
+  </tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--gray3)">이번 달 예정 없음</td></tr>';
+
+  const ml=Array(12).fill(0);
+  [...MECH_ITEMS,...ELEC_ITEMS].forEach(item=>parsePlan(item.plan).forEach(m=>ml[m-1]++));
+  const maxL=Math.max(...ml);
+  const mNames=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('dashBar').innerHTML=ml.map((v,i)=>{
+    const pct=maxL?Math.round(v/maxL*100):0;
+    const isNow=(i===TODAY.getMonth()&&YEAR===TODAY.getFullYear());
+    return `<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+      <span style="width:30px;font-size:11px;color:var(--gray3);text-align:right">${mNames[i]}</span>
+      <div style="flex:1;background:var(--gray2);border-radius:3px;height:16px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${isNow?'var(--red)':'var(--navy2)'};border-radius:3px"></div>
+      </div>
+      <span style="width:28px;font-size:11px;font-weight:${isNow?700:400};color:${isNow?'var(--red)':'var(--gray3)'}">${v}건</span>
+    </div>`;
+  }).join('');
+}
+
+// ── D-Day 알림 ────────────────────────────────────────────
+function renderAlerts(){
+  const all=[...SETTINGS.mech,...SETTINGS.elec,...SETTINGS.edu];
+  const items=all.map(s=>{const nxt=addPeriod(s.lastDate,s.cycle,s.unit);return{...s,nxt,dd:diffDays(nxt.toISOString().slice(0,10))};}).sort((a,b)=>a.dd-b.dd);
+  const groups={'🚨 기한 초과':items.filter(i=>i.dd<0),'🔴 30일 이내':items.filter(i=>i.dd>=0&&i.dd<=30),'🟠 31~90일':items.filter(i=>i.dd>30&&i.dd<=90),'🟢 91일 이상':items.filter(i=>i.dd>90)};
+  let h='';
+  Object.entries(groups).forEach(([title,list])=>{
+    if(!list.length) return;
+    h+=`<div class="card"><div class="card-hdr">${title} (${list.length}건)</div><div class="card-body tw">
+      <table><thead><tr><th>항목</th><th>마지막시행</th><th>다음기한</th><th>D-Day</th><th>담당자</th><th>업체/비고</th></tr></thead><tbody>
+      ${list.map(s=>`<tr><td><strong>${s.name}</strong></td><td style="text-align:center">${s.lastDate}</td>
+        <td style="text-align:center;font-weight:700">${fmtDate(s.nxt)}</td>
+        <td style="text-align:center">${ddayBd(s.nxt.toISOString().slice(0,10))}</td>
+        <td style="text-align:center">${s.person||'-'}</td>
+        <td style="font-size:11px;color:var(--gray3)">${s.vendor||s.note||''}</td>
+      </tr>`).join('')}
+      </tbody></table></div></div>`;
+  });
+  document.getElementById('alertList').innerHTML=h;
+}
+
+// ── 편집 테이블 ───────────────────────────────────────────
+function ei(v,cls){return `<input type="text" class="ei ${cls||''}" value="${String(v||'').replace(/"/g,'&quot;')}">`;}
+function ed(v){return `<input type="date" class="ei" style="width:120px" value="${v||''}">`;}
+function es(v,opts){return `<select class="ei" style="width:80px">${opts.map(o=>`<option value="${o}"${o==v?' selected':''}>${o}</option>`).join('')}</select>`;}
+
+function renderEditLegal(){
+  renderLegalTable('mech','tbMech');
+  renderLegalTable('elec','tbElec');
+  renderEduTable('tbEdu');
+}
+
+function renderLegalTable(type,tbId){
+  const items=SETTINGS[type];
+  document.getElementById(tbId).innerHTML=items.map((s,i)=>`
+    <tr data-type="${type}" data-i="${i}" style="background:${i%2===0?'#f8faff':'#fff'}">
+      <td>${ei(s.name,'ei-xl')}</td>
+      <td>${ei(s.basis,'ei-lg')}</td>
+      <td>${ei(s.cycle,'ei-sm')}</td>
+      <td>${es(s.unit,['year','month'])}</td>
+      <td>${ed(s.lastDate)}</td>
+      <td>${ei(s.vendor,'ei-md')}</td>
+      <td>${ei(s.person,'ei-md')}</td>
+      <td>${ei(s.cat,'ei-md')}</td>
+      <td><button class="del-btn" onclick="delRow(this)">삭제</button></td>
+    </tr>`).join('');
+}
+
+function renderEduTable(tbId){
+  document.getElementById(tbId).innerHTML=SETTINGS.edu.map((s,i)=>`
+    <tr data-type="edu" data-i="${i}" style="background:${i%2===0?'#f8faff':'#fff'}">
+      <td>${ei(s.name,'ei-xl')}</td>
+      <td>${ei(s.basis,'ei-lg')}</td>
+      <td>${ei(s.cycle,'ei-sm')}</td>
+      <td>${es(s.unit,['year','month'])}</td>
+      <td>${ed(s.lastDate)}</td>
+      <td>${ei(s.person,'ei-md')}</td>
+      <td>${ei(s.note,'ei-lg')}</td>
+      <td><button class="del-btn" onclick="delRow(this)">삭제</button></td>
+    </tr>`).join('');
+}
+
+function renderEditPlan(){
+  renderPlanTable('mech','tbMechPlan');
+  renderPlanTable('elec','tbElecPlan');
+}
+
+function renderPlanTable(type,tbId){
+  const items=type==='mech'?MECH_ITEMS:ELEC_ITEMS;
+  document.getElementById(tbId).innerHTML=items.map((s,i)=>`
+    <tr data-type="${type}plan" data-i="${i}" style="background:${i%2===0?'#f8faff':'#fff'}">
+      <td>${ei(s.name,'ei-xl')}</td>
+      <td>${ei(s.sub,'ei-lg')}</td>
+      <td>${ei(s.cycle,'ei-md')}</td>
+      <td>${ei(s.plan,'ei-lg')}</td>
+      <td>${es(s.legal?'true':'false',['false','true'])}</td>
+      <td>${ei(s.legalId||'','ei-md')}</td>
+      <td><button class="del-btn" onclick="delRow(this)">삭제</button></td>
+    </tr>`).join('');
+}
+
+function delRow(btn){
+  if(confirm('이 항목을 삭제할까요?')) btn.closest('tr').remove();
+}
+
+// 행에서 값 읽기
+function getRowVals(tr, fields){
+  const inputs=[...tr.querySelectorAll('input,select')];
+  const obj={};
+  fields.forEach((f,i)=>{if(inputs[i])obj[f]=inputs[i].value;});
+  return obj;
+}
+
+// 저장
+function saveLegal(){
+  // 기계
+  const mechRows=[...document.getElementById('tbMech').querySelectorAll('tr')];
+  SETTINGS.mech=mechRows.map((tr,i)=>({
+    id:'mech'+i,
+    ...getRowVals(tr,['name','basis','cycle','unit','lastDate','vendor','person','cat']),
+    cycle:parseInt(getRowVals(tr,['name','basis','cycle']).cycle)||1,
+  }));
+  // 전기
+  const elecRows=[...document.getElementById('tbElec').querySelectorAll('tr')];
+  SETTINGS.elec=elecRows.map((tr,i)=>({
+    id:'elec'+i,
+    ...getRowVals(tr,['name','basis','cycle','unit','lastDate','vendor','person','cat']),
+    cycle:parseInt(getRowVals(tr,['name','basis','cycle']).cycle)||1,
+  }));
+  // 교육
+  const eduRows=[...document.getElementById('tbEdu').querySelectorAll('tr')];
+  SETTINGS.edu=eduRows.map((tr,i)=>({
+    id:'edu'+i,
+    ...getRowVals(tr,['name','basis','cycle','unit','lastDate','person','note']),
+    cycle:parseInt(getRowVals(tr,['name','basis','cycle']).cycle)||1,
+  }));
+  saveData();
+  rebuildAll();
+  alert('✅ 저장 완료! 계획표와 D-Day에 즉시 반영되었습니다.');
+}
+
+function savePlan(){
+  const mechRows=[...document.getElementById('tbMechPlan').querySelectorAll('tr')];
+  MECH_ITEMS.splice(0,MECH_ITEMS.length,...mechRows.map(tr=>{
+    const v=getRowVals(tr,['name','sub','cycle','plan','legal','legalId']);
+    return {...v,legal:v.legal==='true'};
+  }));
+  const elecRows=[...document.getElementById('tbElecPlan').querySelectorAll('tr')];
+  ELEC_ITEMS.splice(0,ELEC_ITEMS.length,...elecRows.map(tr=>{
+    const v=getRowVals(tr,['name','sub','cycle','plan','legal','legalId']);
+    return {...v,legal:v.legal==='true'};
+  }));
+  saveData();
+  rebuildAll();
+  alert('✅ 저장 완료! 계획표에 즉시 반영되었습니다.');
+}
+
+// 항목 추가
+function addLegal(type){
+  const newItem={id:'new'+Date.now(),name:'새 점검 항목',basis:'법적근거',cycle:1,unit:'year',lastDate:new Date().toISOString().slice(0,10),vendor:'',person:'',cat:'기타'};
+  if(type==='edu'){
+    SETTINGS.edu.push({...newItem,note:''});
+    renderEduTable('tbEdu');
+  } else {
+    SETTINGS[type].push(newItem);
+    renderLegalTable(type,type==='mech'?'tbMech':'tbElec');
+  }
+}
+
+function addPlan(type){
+  const newItem={name:'새 항목',sub:'',cycle:'년1회',plan:'M1',legal:false,legalId:''};
+  if(type==='mech'){MECH_ITEMS.push(newItem);renderPlanTable('mech','tbMechPlan');}
+  else{ELEC_ITEMS.push(newItem);renderPlanTable('elec','tbElecPlan');}
+}
+
+// CSV 내보내기
+function exportCSV(){
+  const mn=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  let csv=`KRA 대구지사 빌딩 ${YEAR}년 연간 점검보수 계획표\n\n[기계설비]\n시설물,세부,주기,${mn.join(',')}\n`;
+  MECH_ITEMS.forEach(item=>{
+    const pm=parsePlan(item.plan);
+    const lm=item.legal&&item.legalId?getLegalMonth(item.legalId):[];
+    const cells=Array.from({length:12},(_,i)=>lm.includes(i+1)?'★법정':pm.includes(i+1)?'●':'');
+    csv+=`${item.name},${item.sub},${item.cycle},${cells.join(',')}\n`;
+  });
+  csv+=`\n[전기설비]\n시설물,세부,주기,${mn.join(',')}\n`;
+  ELEC_ITEMS.forEach(item=>{
+    const pm=parsePlan(item.plan);
+    const lm=item.legal&&item.legalId?getLegalMonth(item.legalId):[];
+    const cells=Array.from({length:12},(_,i)=>lm.includes(i+1)?'★법정':pm.includes(i+1)?'●':'');
+    csv+=`${item.name},${item.sub},${item.cycle},${cells.join(',')}\n`;
+  });
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`대구사업소_${YEAR}년_연간점검계획표.csv`;
+  a.click();
 }
 
 // ── 전체 재구성 ───────────────────────────────────────────
@@ -836,16 +765,128 @@ function rebuildAll(){
   YEAR=parseInt(document.getElementById('yearInput').value)||2026;
   renderDash();
   renderAlerts();
-  renderPlanTable(MECH_ITEMS,'mechTable');
-  renderPlanTable(ELEC_ITEMS,'elecTable');
-  renderLegalTable(SETTINGS.mech,'legalMechTable');
-  renderLegalTable(SETTINGS.elec,'legalElecTable');
-  renderEduTable();
-  renderSettings();
+  renderPlan(MECH_ITEMS,'mechTable');
+  renderPlan(ELEC_ITEMS,'elecTable');
+  renderLegal(SETTINGS.mech,'legalMechTable');
+  renderLegal(SETTINGS.elec,'legalElecTable');
+  renderEdu();
 }
 
-// ── 초기화 ────────────────────────────────────────────────
-window.onload=rebuildAll;
+
+// ── 탭 전환 ──────────────────────────────────────────────
+function switchSetTab(btn, cls, target){
+  document.querySelectorAll('.'+cls).forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.stab').forEach(el=>el.style.display='none');
+  document.getElementById(target).style.display='block';
+}
+
+// ── localStorage 저장/로드 ────────────────────────────────
+function loadSaved(){
+  try{
+    const sm=localStorage.getItem('fm_settings_mech');
+    const se=localStorage.getItem('fm_settings_elec');
+    const sd=localStorage.getItem('fm_settings_edu');
+    const smp=localStorage.getItem('fm_mech_items');
+    const sep=localStorage.getItem('fm_elec_items');
+    if(sm) SETTINGS.mech=JSON.parse(sm);
+    if(se) SETTINGS.elec=JSON.parse(se);
+    if(sd) SETTINGS.edu=JSON.parse(sd);
+    if(smp){const d=JSON.parse(smp);if(d.length)MECH_ITEMS.splice(0,MECH_ITEMS.length,...d);}
+    if(sep){const d=JSON.parse(sep);if(d.length)ELEC_ITEMS.splice(0,ELEC_ITEMS.length,...d);}
+  }catch(e){console.log('load err',e);}
+}
+
+function saveAll(){
+  collectLegal('mech','tbMech');
+  collectLegal('elec','tbElec');
+  collectEdu('tbEdu');
+  collectPlan('mech','tbMechPlan');
+  collectPlan('elec','tbElecPlan');
+  localStorage.setItem('fm_settings_mech', JSON.stringify(SETTINGS.mech));
+  localStorage.setItem('fm_settings_elec', JSON.stringify(SETTINGS.elec));
+  localStorage.setItem('fm_settings_edu',  JSON.stringify(SETTINGS.edu));
+  localStorage.setItem('fm_mech_items', JSON.stringify(MECH_ITEMS));
+  localStorage.setItem('fm_elec_items', JSON.stringify(ELEC_ITEMS));
+  rebuildAll();
+  alert('✅ 저장 완료! 계획표·D-Day에 즉시 반영되었습니다.');
+}
+
+function collectLegal(type, tbId){
+  const rows=document.getElementById(tbId)?.querySelectorAll('tr[data-idx]');
+  if(!rows) return;
+  const arr=[];
+  rows.forEach(r=>{
+    const cells=r.querySelectorAll('input,select');
+    arr.push({
+      id: r.dataset.idx,
+      name: cells[0]?.value||'',
+      basis: cells[1]?.value||'',
+      cycle: parseInt(cells[2]?.value)||1,
+      unit: cells[3]?.value||'year',
+      lastDate: cells[4]?.value||'',
+      vendor: cells[5]?.value||'',
+      person: cells[6]?.value||'',
+      cat: cells[7]?.value||'기타',
+    });
+  });
+  SETTINGS[type]=arr;
+}
+
+function collectEdu(tbId){
+  const rows=document.getElementById(tbId)?.querySelectorAll('tr[data-idx]');
+  if(!rows) return;
+  const arr=[];
+  rows.forEach(r=>{
+    const cells=r.querySelectorAll('input,select');
+    arr.push({
+      id: r.dataset.idx,
+      name: cells[0]?.value||'',
+      basis: cells[1]?.value||'',
+      cycle: parseInt(cells[2]?.value)||1,
+      unit: cells[3]?.value||'year',
+      lastDate: cells[4]?.value||'',
+      person: cells[5]?.value||'',
+      note: cells[6]?.value||'',
+    });
+  });
+  SETTINGS.edu=arr;
+}
+
+function collectPlan(type, tbId){
+  const rows=document.getElementById(tbId)?.querySelectorAll('tr[data-idx]');
+  if(!rows) return;
+  const arr=[];
+  rows.forEach(r=>{
+    const cells=r.querySelectorAll('input,select');
+    const legal=cells[4]?.value==='true';
+    arr.push({
+      name: cells[0]?.value||'',
+      sub: cells[1]?.value||'',
+      cycle: cells[2]?.value||'년1회',
+      plan: cells[3]?.value||'M1',
+      legal: legal,
+      legalId: legal?(cells[5]?.value||''):'',
+    });
+  });
+  if(type==='mech') MECH_ITEMS.splice(0,MECH_ITEMS.length,...arr);
+  else ELEC_ITEMS.splice(0,ELEC_ITEMS.length,...arr);
+}
+
+// ── 설정 페이지 렌더 오버라이드 ───────────────────────────
+function renderSettings(){
+  renderEditLegal('mech','tbMech');
+  renderEditLegal('elec','tbElec');
+  renderEditEdu('tbEdu');
+  renderEditPlan(MECH_ITEMS,'tbMechPlan');
+  renderEditPlan(ELEC_ITEMS,'tbElecPlan');
+}
+
+
+window.onload=function(){
+  loadSaved();
+  rebuildAll();
+};
 </script>
 </body>
 </html>
