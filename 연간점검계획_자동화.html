@@ -354,7 +354,10 @@ const DEFAULT_ELEC = [
 ];
 
 // 실제 사용 데이터 (localStorage 우선)
-let SETTINGS, MECH_ITEMS, ELEC_ITEMS;
+// SETTINGS 는 DEFAULT_SETTINGS 로 초기화 후 localStorage 로 덮어씀
+let SETTINGS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+let MECH_ITEMS = JSON.parse(JSON.stringify(DEFAULT_MECH_ITEMS));
+let ELEC_ITEMS = JSON.parse(JSON.stringify(DEFAULT_ELEC_ITEMS));
 
 // ── localStorage 로드/저장 ────────────────────────────────
 function loadData(){
@@ -369,9 +372,13 @@ function loadData(){
   }
 }
 function saveData(){
-  localStorage.setItem('fm_settings', JSON.stringify(SETTINGS));
-  localStorage.setItem('fm_mech', JSON.stringify(MECH_ITEMS));
-  localStorage.setItem('fm_elec', JSON.stringify(ELEC_ITEMS));
+  try{
+    localStorage.setItem('fm_settings_mech', JSON.stringify(SETTINGS.mech));
+    localStorage.setItem('fm_settings_elec', JSON.stringify(SETTINGS.elec));
+    localStorage.setItem('fm_settings_edu',  JSON.stringify(SETTINGS.edu));
+    localStorage.setItem('fm_mech_items', JSON.stringify(MECH_ITEMS));
+    localStorage.setItem('fm_elec_items', JSON.stringify(ELEC_ITEMS));
+  }catch(e){ console.log('saveData 오류:', e); }
 }
 
 // ── 날짜 유틸 ────────────────────────────────────────────
@@ -720,13 +727,13 @@ function savePlan(){
 
 // 항목 추가
 function addLegal(type){
-  const newItem={id:'new'+Date.now(),name:'새 점검 항목',basis:'법적근거',cycle:1,unit:'year',lastDate:new Date().toISOString().slice(0,10),vendor:'',person:'',cat:'기타'};
+  const today=new Date().toISOString().slice(0,10);
   if(type==='edu'){
-    SETTINGS.edu.push({...newItem,note:''});
+    SETTINGS.edu.push({id:'edu'+Date.now(),name:'새 교육 항목',basis:'법적근거',cycle:3,unit:'year',lastDate:today,person:'담당자',note:''});
     renderEduTable('tbEdu');
   } else {
-    SETTINGS[type].push(newItem);
-    renderLegalTable(type,type==='mech'?'tbMech':'tbElec');
+    SETTINGS[type].push({id:type+Date.now(),name:'새 점검 항목',basis:'법적근거',cycle:1,unit:'year',lastDate:today,vendor:'담당업체',person:'담당자',cat:'기타'});
+    renderLegalTable(type, type==='mech'?'tbMech':'tbElec');
   }
 }
 
@@ -784,17 +791,22 @@ function switchSetTab(btn, cls, target){
 // ── localStorage 저장/로드 ────────────────────────────────
 function loadSaved(){
   try{
+    // 항상 DEFAULT 로 초기화 먼저
+    SETTINGS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    MECH_ITEMS = JSON.parse(JSON.stringify(DEFAULT_MECH_ITEMS));
+    ELEC_ITEMS = JSON.parse(JSON.stringify(DEFAULT_ELEC_ITEMS));
+    // localStorage 에 저장된 게 있으면 덮어씀
     const sm=localStorage.getItem('fm_settings_mech');
     const se=localStorage.getItem('fm_settings_elec');
     const sd=localStorage.getItem('fm_settings_edu');
     const smp=localStorage.getItem('fm_mech_items');
     const sep=localStorage.getItem('fm_elec_items');
-    if(sm) SETTINGS.mech=JSON.parse(sm);
-    if(se) SETTINGS.elec=JSON.parse(se);
-    if(sd) SETTINGS.edu=JSON.parse(sd);
-    if(smp){const d=JSON.parse(smp);if(d.length)MECH_ITEMS.splice(0,MECH_ITEMS.length,...d);}
-    if(sep){const d=JSON.parse(sep);if(d.length)ELEC_ITEMS.splice(0,ELEC_ITEMS.length,...d);}
-  }catch(e){console.log('load err',e);}
+    if(sm && JSON.parse(sm).length) SETTINGS.mech=JSON.parse(sm);
+    if(se && JSON.parse(se).length) SETTINGS.elec=JSON.parse(se);
+    if(sd && JSON.parse(sd).length) SETTINGS.edu=JSON.parse(sd);
+    if(smp){ const d=JSON.parse(smp); if(d.length) MECH_ITEMS=d; }
+    if(sep){ const d=JSON.parse(sep); if(d.length) ELEC_ITEMS=d; }
+  }catch(e){ console.log('loadSaved 오류:', e); }
 }
 
 function saveAll(){
@@ -875,17 +887,19 @@ function collectPlan(type, tbId){
 
 // ── 설정 페이지 렌더 오버라이드 ───────────────────────────
 function renderSettings(){
-  renderEditLegal('mech','tbMech');
-  renderEditLegal('elec','tbElec');
-  renderEditEdu('tbEdu');
-  renderEditPlan(MECH_ITEMS,'tbMechPlan');
-  renderEditPlan(ELEC_ITEMS,'tbElecPlan');
+  renderLegalTable('mech','tbMech');
+  renderLegalTable('elec','tbElec');
+  renderEduTable('tbEdu');
+  renderPlanTable('mech','tbMechPlan');
+  renderPlanTable('elec','tbElecPlan');
 }
 
 
 window.onload=function(){
   loadSaved();
   rebuildAll();
+  renderEditLegal();
+  renderEditPlan();
 };
 </script>
 </body>
