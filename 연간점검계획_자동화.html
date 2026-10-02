@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+.<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -107,7 +107,7 @@ select.ei{cursor:pointer}
       <input type="number" id="yearInput" value="2026" min="2020" max="2040">
     </div>
     <button class="btn-apply" onclick="rebuildAll()">🔄 적용</button>
-    <button class="btn-apply" style="background:#fff" onclick="exportCSV()">📥 Excel</button>
+    <button class="btn-apply" style="background:#fff" onclick="exportCSV()">📥 엑셀</button>
   </div>
 </header>
 
@@ -115,7 +115,7 @@ select.ei{cursor:pointer}
 <nav class="sidebar">
   <div class="nav-lbl">대시보드</div>
   <button class="nav-btn on" onclick="goPage('dash')"><span>📊</span>전체 현황</button>
-  <button class="nav-btn" onclick="goPage('alert')"><span>🚨</span>D-Day 알림</button>
+  <button class="nav-btn" onclick="goPage('alert')"><span>🚨</span>기한 경보</button>
   <div class="nav-lbl">기계설비</div>
   <button class="nav-btn" onclick="goPage('mech')"><span>⚙️</span>기계설비 계획표</button>
   <button class="nav-btn" onclick="goPage('legal-mech')"><span>📋</span>법정점검 현황</button>
@@ -138,7 +138,7 @@ select.ei{cursor:pointer}
   <div class="kpi-row" id="dashKPI"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div class="card"><div class="card-hdr">🚨 임박 법정점검 (90일 이내)</div>
-      <div class="card-body tw"><table><thead><tr><th>항목</th><th>기한</th><th>D-Day</th><th>담당</th></tr></thead><tbody id="dashLegal"></tbody></table></div>
+      <div class="card-body tw"><table><thead><tr><th>항목</th><th>기한</th><th>남은기간</th><th>담당</th></tr></thead><tbody id="dashLegal"></tbody></table></div>
     </div>
     <div class="card"><div class="card-hdr">📅 이번 달 점검 예정</div>
       <div class="card-body tw"><table><thead><tr><th>항목</th><th>주기</th><th>구분</th></tr></thead><tbody id="dashMonth"></tbody></table></div>
@@ -149,9 +149,9 @@ select.ei{cursor:pointer}
   </div>
 </div>
 
-<!-- D-Day 알림 -->
+<!-- 기한 경보 -->
 <div id="pg-alert" class="pg">
-  <div class="pg-title">🚨 D-Day 자동 알림</div>
+  <div class="pg-title">🚨 기한 자동 경보</div>
   <div id="alertList"></div>
 </div>
 
@@ -164,12 +164,20 @@ select.ei{cursor:pointer}
     <span style="background:#ffe0b2;color:#e65100;padding:2px 7px;border-radius:3px;font-weight:700">★ 법정</span>
     <span style="background:#ffcdd2;color:#b71c1c;padding:2px 7px;border-radius:3px;font-weight:700">⚠ 기한초과</span>
   </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="addPlan('mech')">➕ 항목 추가</button>
+    <button class="btn btn-success" onclick="savePlan()">💾 저장 및 반영</button>
+  </div>
   <div class="card"><div class="card-body tw"><table id="mechTable"></table></div></div>
 </div>
 
 <!-- 기계 법정점검 -->
 <div id="pg-legal-mech" class="pg">
   <div class="pg-title">📋 기계설비 법정점검 현황</div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="addLegal('mech')">➕ 항목 추가</button>
+    <button class="btn btn-success" onclick="saveLegal()">💾 저장 및 반영</button>
+  </div>
   <div class="card"><div class="card-body tw"><table id="legalMechTable"></table></div></div>
 </div>
 
@@ -181,25 +189,37 @@ select.ei{cursor:pointer}
     <span style="background:#c8e6c9;color:#1b5e20;padding:2px 7px;border-radius:3px;font-weight:700">● 계획</span>
     <span style="background:#ffe0b2;color:#e65100;padding:2px 7px;border-radius:3px;font-weight:700">★ 법정</span>
   </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="addPlan('elec')">➕ 항목 추가</button>
+    <button class="btn btn-success" onclick="savePlan()">💾 저장 및 반영</button>
+  </div>
   <div class="card"><div class="card-body tw"><table id="elecTable"></table></div></div>
 </div>
 
 <!-- 전기 법정점검 -->
 <div id="pg-legal-elec" class="pg">
   <div class="pg-title">📋 전기설비 법정점검 현황</div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="addLegal('elec')">➕ 항목 추가</button>
+    <button class="btn btn-success" onclick="saveLegal()">💾 저장 및 반영</button>
+  </div>
   <div class="card"><div class="card-body tw"><table id="legalElecTable"></table></div></div>
 </div>
 
 <!-- 교육관리 -->
 <div id="pg-edu" class="pg">
   <div class="pg-title">🎓 자격·교육 이력 관리</div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="addLegal('edu')">➕ 항목 추가</button>
+    <button class="btn btn-success" onclick="saveLegal()">💾 저장 및 반영</button>
+  </div>
   <div class="card"><div class="card-body tw"><table id="eduTable"></table></div></div>
 </div>
 
 <!-- 법정점검 편집 -->
 <div id="pg-edit-legal" class="pg">
   <div class="pg-title">✏️ 법정점검 항목 편집 <span class="sub">추가·수정·삭제 후 저장하면 즉시 반영</span></div>
-  <div class="alert al-info">💡 항목을 직접 추가·수정·삭제하세요. [💾 저장 및 반영] 클릭 시 계획표·D-Day에 즉시 적용됩니다.</div>
+  <div class="alert al-info">💡 항목을 직접 추가·수정·삭제하세요. [💾 저장 및 반영] 클릭 시 계획표·기한 경보에 즉시 적용됩니다.</div>
   <div class="tabs">
     <button class="tab on" onclick="switchLTab(this,'lt','lt0')">⚙️ 기계설비</button>
     <button class="tab" onclick="switchLTab(this,'lt','lt1')">⚡ 전기설비</button>
@@ -240,7 +260,7 @@ select.ei{cursor:pointer}
 <!-- 계획항목 편집 -->
 <div id="pg-edit-plan" class="pg">
   <div class="pg-title">✏️ 계획항목 편집 <span class="sub">월별 계획표 항목 추가·수정·삭제</span></div>
-  <div class="alert al-info">💡 실시월: M1=1월, M3=3월, M3,M6,M9,M12=분기, MONTHLY=매월, WEEKLY=매주, DAILY=매일</div>
+  <div class="alert al-info">💡 실시월: M1=1월, M3=3월, M3,M6,M9,M12=분기, 매월, 매주, 매일 입력 가능</div>
   <div class="tabs">
     <button class="tab on" onclick="switchLTab(this,'pt','pt0')">⚙️ 기계설비</button>
     <button class="tab" onclick="switchLTab(this,'pt','pt1')">⚡ 전기설비</button>
@@ -356,8 +376,8 @@ const DEFAULT_ELEC = [
 // 실제 사용 데이터 (localStorage 우선)
 // SETTINGS 는 DEFAULT_SETTINGS 로 초기화 후 localStorage 로 덮어씀
 let SETTINGS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-let MECH_ITEMS = JSON.parse(JSON.stringify(DEFAULT_MECH_ITEMS));
-let ELEC_ITEMS = JSON.parse(JSON.stringify(DEFAULT_ELEC_ITEMS));
+let MECH_ITEMS = JSON.parse(JSON.stringify(DEFAULT_MECH));
+let ELEC_ITEMS = JSON.parse(JSON.stringify(DEFAULT_ELEC));
 
 // ── localStorage 로드/저장 ────────────────────────────────
 function loadData(){
@@ -393,7 +413,7 @@ function diffDays(d){return Math.ceil((new Date(d)-TODAY)/(1000*60*60*24));}
 function ddayBd(d){
   const dd=diffDays(d);
   if(dd<0) return `<span class="bd bd-danger">D+${Math.abs(dd)} 초과</span>`;
-  if(dd===0) return `<span class="bd bd-danger">D-Day</span>`;
+  if(dd===0) return `<span class="bd bd-danger">기한</span>`;
   if(dd<=30) return `<span class="bd bd-danger">D-${dd}</span>`;
   if(dd<=90) return `<span class="bd bd-warn">D-${dd}</span>`;
   return `<span class="bd bd-ok">D-${dd}</span>`;
@@ -439,12 +459,23 @@ function getLegalMonth(id){
 function goPage(id){
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
-  document.getElementById('pg-'+id).classList.add('on');
+  const pg=document.getElementById('pg-'+id);
+  if(!pg){ console.log('페이지 없음:',id); return; }
+  pg.classList.add('on');
   document.querySelectorAll('.nav-btn').forEach(b=>{
     if(b.getAttribute('onclick')===`goPage('${id}')`) b.classList.add('on');
   });
-  if(id==='edit-legal') renderEditLegal();
-  if(id==='edit-plan') renderEditPlan();
+  try{
+    if(id==='dash')       renderDash();
+    if(id==='alert')      renderAlerts();
+    if(id==='mech')       renderPlan(MECH_ITEMS,'mechTable');
+    if(id==='elec')       renderPlan(ELEC_ITEMS,'elecTable');
+    if(id==='legal-mech') renderLegal(SETTINGS.mech,'legalMechTable');
+    if(id==='legal-elec') renderLegal(SETTINGS.elec,'legalElecTable');
+    if(id==='edu')        renderEdu();
+    if(id==='edit-legal') renderEditLegal();
+    if(id==='edit-plan')  renderEditPlan();
+  }catch(e){ console.error('goPage 오류:',id,e); }
 }
 
 function switchLTab(btn,cls,target){
@@ -487,7 +518,7 @@ function renderPlan(items, tblId){
 // ── 법정점검 테이블 렌더 ──────────────────────────────────
 function renderLegal(items, tblId){
   const tbl=document.getElementById(tblId);
-  let h=`<thead><tr><th>점검항목</th><th>법적근거</th><th>주기</th><th>마지막시행일</th><th>다음기한</th><th>D-Day</th><th>담당자</th><th>담당업체</th><th>분류</th></tr></thead><tbody>`;
+  let h=`<thead><tr><th>점검항목</th><th>법적근거</th><th>주기</th><th>마지막시행일</th><th>다음기한</th><th>남은기간</th><th>담당자</th><th>담당업체</th><th>분류</th></tr></thead><tbody>`;
   items.forEach((s,i)=>{
     const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
     const dd=diffDays(nxt.toISOString().slice(0,10));
@@ -509,7 +540,7 @@ function renderLegal(items, tblId){
 // ── 교육 테이블 ───────────────────────────────────────────
 function renderEdu(){
   const tbl=document.getElementById('eduTable');
-  let h=`<thead><tr><th>교육/자격명</th><th>법적근거</th><th>주기</th><th>최종이수일</th><th>다음기한</th><th>D-Day</th><th>대상자</th><th>비고</th></tr></thead><tbody>`;
+  let h=`<thead><tr><th>교육/자격명</th><th>법적근거</th><th>주기</th><th>최종이수일</th><th>다음기한</th><th>남은기간</th><th>대상자</th><th>비고</th></tr></thead><tbody>`;
   SETTINGS.edu.forEach((s,i)=>{
     const nxt=addPeriod(s.lastDate,s.cycle,s.unit);
     const dd=diffDays(nxt.toISOString().slice(0,10));
@@ -588,7 +619,7 @@ function renderDash(){
   }).join('');
 }
 
-// ── D-Day 알림 ────────────────────────────────────────────
+// ── 기한 경보 ────────────────────────────────────────────
 function renderAlerts(){
   const all=[...SETTINGS.mech,...SETTINGS.elec,...SETTINGS.edu];
   const items=all.map(s=>{const nxt=addPeriod(s.lastDate,s.cycle,s.unit);return{...s,nxt,dd:diffDays(nxt.toISOString().slice(0,10))};}).sort((a,b)=>a.dd-b.dd);
@@ -597,7 +628,7 @@ function renderAlerts(){
   Object.entries(groups).forEach(([title,list])=>{
     if(!list.length) return;
     h+=`<div class="card"><div class="card-hdr">${title} (${list.length}건)</div><div class="card-body tw">
-      <table><thead><tr><th>항목</th><th>마지막시행</th><th>다음기한</th><th>D-Day</th><th>담당자</th><th>업체/비고</th></tr></thead><tbody>
+      <table><thead><tr><th>항목</th><th>마지막시행</th><th>다음기한</th><th>남은기간</th><th>담당자</th><th>업체/비고</th></tr></thead><tbody>
       ${list.map(s=>`<tr><td><strong>${s.name}</strong></td><td style="text-align:center">${s.lastDate}</td>
         <td style="text-align:center;font-weight:700">${fmtDate(s.nxt)}</td>
         <td style="text-align:center">${ddayBd(s.nxt.toISOString().slice(0,10))}</td>
@@ -657,16 +688,26 @@ function renderEditPlan(){
 
 function renderPlanTable(type,tbId){
   const items=type==='mech'?MECH_ITEMS:ELEC_ITEMS;
-  document.getElementById(tbId).innerHTML=items.map((s,i)=>`
-    <tr data-type="${type}plan" data-i="${i}" style="background:${i%2===0?'#f8faff':'#fff'}">
-      <td>${ei(s.name,'ei-xl')}</td>
-      <td>${ei(s.sub,'ei-lg')}</td>
-      <td>${ei(s.cycle,'ei-md')}</td>
-      <td>${ei(s.plan,'ei-lg')}</td>
-      <td>${es(s.legal?'true':'false',['false','true'])}</td>
-      <td>${ei(s.legalId||'','ei-md')}</td>
+  const allLegal=[...SETTINGS.mech,...SETTINGS.elec];
+  const tb=document.getElementById(tbId);
+  if(!tb) return;
+  tb.innerHTML=items.map((s,i)=>{
+    const legalSel=`<select class="ei" style="width:130px">
+      <option value="">해당없음</option>
+      ${allLegal.map(ls=>`<option value="${ls.id}"${ls.id===s.legalId?' selected':''}>${ls.name}</option>`).join('')}
+    </select>`;
+    return `<tr data-type="${type}plan" data-i="${i}" style="background:${i%2===0?'#f8faff':'#fff'}">
+      <td><input class="ei ei-xl" type="text" value="${(s.name||'').replace(/"/g,'&quot;')}"></td>
+      <td><input class="ei ei-lg" type="text" value="${(s.sub||'').replace(/"/g,'&quot;')}"></td>
+      <td><input class="ei ei-md" type="text" value="${s.cycle||'년1회'}"></td>
+      <td><input class="ei ei-lg" type="text" value="${s.plan||'M1'}" placeholder="M1,M6,MONTHLY"></td>
+      <td style="text-align:center">
+        <input type="hidden" class="legal-chk" value="${s.legal?'true':'false'}">
+      </td>
+      <td>${legalSel}</td>
       <td><button class="del-btn" onclick="delRow(this)">삭제</button></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function delRow(btn){
@@ -683,46 +724,65 @@ function getRowVals(tr, fields){
 
 // 저장
 function saveLegal(){
-  // 기계
-  const mechRows=[...document.getElementById('tbMech').querySelectorAll('tr')];
-  SETTINGS.mech=mechRows.map((tr,i)=>({
-    id:'mech'+i,
-    ...getRowVals(tr,['name','basis','cycle','unit','lastDate','vendor','person','cat']),
-    cycle:parseInt(getRowVals(tr,['name','basis','cycle']).cycle)||1,
-  }));
-  // 전기
-  const elecRows=[...document.getElementById('tbElec').querySelectorAll('tr')];
-  SETTINGS.elec=elecRows.map((tr,i)=>({
-    id:'elec'+i,
-    ...getRowVals(tr,['name','basis','cycle','unit','lastDate','vendor','person','cat']),
-    cycle:parseInt(getRowVals(tr,['name','basis','cycle']).cycle)||1,
-  }));
-  // 교육
-  const eduRows=[...document.getElementById('tbEdu').querySelectorAll('tr')];
-  SETTINGS.edu=eduRows.map((tr,i)=>({
-    id:'edu'+i,
-    ...getRowVals(tr,['name','basis','cycle','unit','lastDate','person','note']),
-    cycle:parseInt(getRowVals(tr,['name','basis','cycle']).cycle)||1,
-  }));
-  saveData();
-  rebuildAll();
-  alert('✅ 저장 완료! 계획표와 D-Day에 즉시 반영되었습니다.');
+  try{
+    const getTb=(id)=>[...document.getElementById(id).querySelectorAll('tr[data-type]')];
+    SETTINGS.mech=getTb('tbMech').map((tr,i)=>{
+      const v=getRowVals(tr,['name','basis','cycle','unit','lastDate','vendor','person','cat']);
+      return {id:'mech'+i,...v,cycle:parseInt(v.cycle)||1};
+    });
+    SETTINGS.elec=getTb('tbElec').map((tr,i)=>{
+      const v=getRowVals(tr,['name','basis','cycle','unit','lastDate','vendor','person','cat']);
+      return {id:'elec'+i,...v,cycle:parseInt(v.cycle)||1};
+    });
+    SETTINGS.edu=getTb('tbEdu').map((tr,i)=>{
+      const v=getRowVals(tr,['name','basis','cycle','unit','lastDate','person','note']);
+      return {id:'edu'+i,...v,cycle:parseInt(v.cycle)||1};
+    });
+    if(!SETTINGS.mech.length&&!SETTINGS.elec.length){
+      alert('⚠️ 저장할 항목이 없습니다. 항목을 먼저 추가하세요.');
+      return;
+    }
+    saveData();
+    rebuildAll();          // 대시보드·계획표·법정현황 전체 갱신
+    renderEditLegal();     // 편집 테이블도 갱신
+    alert('✅ 법정점검 저장 완료!\nD-Day 경보·계획표·법정점검 현황에 즉시 반영되었습니다.');
+  }catch(e){
+    console.error('saveLegal 오류:',e);
+    alert('저장 오류: '+e.message);
+  }
 }
 
 function savePlan(){
-  const mechRows=[...document.getElementById('tbMechPlan').querySelectorAll('tr')];
-  MECH_ITEMS.splice(0,MECH_ITEMS.length,...mechRows.map(tr=>{
-    const v=getRowVals(tr,['name','sub','cycle','plan','legal','legalId']);
-    return {...v,legal:v.legal==='true'};
-  }));
-  const elecRows=[...document.getElementById('tbElecPlan').querySelectorAll('tr')];
-  ELEC_ITEMS.splice(0,ELEC_ITEMS.length,...elecRows.map(tr=>{
-    const v=getRowVals(tr,['name','sub','cycle','plan','legal','legalId']);
-    return {...v,legal:v.legal==='true'};
-  }));
-  saveData();
-  rebuildAll();
-  alert('✅ 저장 완료! 계획표에 즉시 반영되었습니다.');
+  try{
+    const getPlanRows=(tbId)=>[...document.getElementById(tbId).querySelectorAll('tr[data-type]')].map(tr=>{
+      const inputs=[...tr.querySelectorAll('input[type=text]')];
+      const legalSel=tr.querySelector('select');
+      const legalId=legalSel?legalSel.value:'';
+      return {
+        name:  inputs[0]?.value||'',
+        sub:   inputs[1]?.value||'',
+        cycle: inputs[2]?.value||'년1회',
+        plan:  inputs[3]?.value||'M1',
+        legal: !!legalId,
+        legalId: legalId,
+      };
+    });
+    const newMech = getPlanRows('tbMechPlan');
+    const newElec = getPlanRows('tbElecPlan');
+    if(!newMech.length && !newElec.length){
+      alert('⚠️ 저장할 항목이 없습니다.');
+      return;
+    }
+    MECH_ITEMS.splice(0, MECH_ITEMS.length, ...newMech);
+    ELEC_ITEMS.splice(0, ELEC_ITEMS.length, ...newElec);
+    saveData();
+    rebuildAll();
+    renderEditPlan();
+    alert('✅ 계획항목 저장 완료! 계획표에 즉시 반영되었습니다.');
+  }catch(e){
+    console.error('savePlan 오류:',e);
+    alert('저장 오류: '+e.message);
+  }
 }
 
 // 항목 추가
@@ -736,13 +796,11 @@ function addLegal(type){
     renderLegalTable(type, type==='mech'?'tbMech':'tbElec');
   }
 }
-
 function addPlan(type){
   const newItem={name:'새 항목',sub:'',cycle:'년1회',plan:'M1',legal:false,legalId:''};
-  if(type==='mech'){MECH_ITEMS.push(newItem);renderPlanTable('mech','tbMechPlan');}
-  else{ELEC_ITEMS.push(newItem);renderPlanTable('elec','tbElecPlan');}
+  if(type==='mech'){ MECH_ITEMS.push(newItem); renderPlanTable('mech','tbMechPlan'); }
+  else { ELEC_ITEMS.push(newItem); renderPlanTable('elec','tbElecPlan'); }
 }
-
 // CSV 내보내기
 function exportCSV(){
   const mn=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
@@ -793,8 +851,8 @@ function loadSaved(){
   try{
     // 항상 DEFAULT 로 초기화 먼저
     SETTINGS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-    MECH_ITEMS = JSON.parse(JSON.stringify(DEFAULT_MECH_ITEMS));
-    ELEC_ITEMS = JSON.parse(JSON.stringify(DEFAULT_ELEC_ITEMS));
+    MECH_ITEMS = JSON.parse(JSON.stringify(DEFAULT_MECH));
+    ELEC_ITEMS = JSON.parse(JSON.stringify(DEFAULT_ELEC));
     // localStorage 에 저장된 게 있으면 덮어씀
     const sm=localStorage.getItem('fm_settings_mech');
     const se=localStorage.getItem('fm_settings_elec');
@@ -821,7 +879,7 @@ function saveAll(){
   localStorage.setItem('fm_mech_items', JSON.stringify(MECH_ITEMS));
   localStorage.setItem('fm_elec_items', JSON.stringify(ELEC_ITEMS));
   rebuildAll();
-  alert('✅ 저장 완료! 계획표·D-Day에 즉시 반영되었습니다.');
+  alert('✅ 저장 완료! 계획표·기한경보에 즉시 반영되었습니다.');
 }
 
 function collectLegal(type, tbId){
@@ -898,8 +956,9 @@ function renderSettings(){
 window.onload=function(){
   loadSaved();
   rebuildAll();
-  renderEditLegal();
-  renderEditPlan();
+  // 편집 테이블 미리 렌더 (데이터 로드 후)
+  try{ renderEditLegal(); }catch(e){}
+  try{ renderEditPlan(); }catch(e){}
 };
 </script>
 </body>
