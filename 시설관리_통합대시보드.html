@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+.<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -317,11 +317,11 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <!-- 대시보드 -->
     <div id="page-dashboard" class="page active">
-      <div class="page-title">📊 시설관리 대시보드
+      <div class="page-title">📊 시설관리 대시보드 <button onclick="renderLinked();alert('✅ 연동 완료!');" style="margin-left:10px;padding:4px 12px;background:#2E75B6;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🔄 점검계획 연동</button>
         <span style="font-size:12px;font-weight:400;color:var(--gray3);margin-left:auto" id="updateDate">최종 업데이트: </span><script>document.getElementById("updateDate").textContent="최종 업데이트: "+new Date().toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric"});</script>
       </div>
 
-      <div class="alert alert-warn">⚠️ <strong>D-28</strong> 냉각탑 수질관리 점검 예정 (2026.07.31) — 위생검사원 일정 확인 필요</div>
+      <div id="scheduleAlertBox"><!-- 연간점검계획 연동 D-Day 경보 --></div>
       <div class="alert alert-danger">🚨 <strong>미처리 민원</strong> 1건 — 8층 복도 형광등 불량 (2026.03.10 접수, 처리 지연)</div>
 
       <div class="kpi-grid">
@@ -335,16 +335,10 @@ document.addEventListener('DOMContentLoaded', function(){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <!-- 이번 달 예정 점검 -->
         <div class="card">
-          <div class="card-header">📋 이번 달 예정 점검 (7월)</div>
+          <div class="card-header">📋 이번 달 예정 점검</div>
           <div class="card-body">
             <table><thead><tr><th>점검항목</th><th>예정일</th><th>업체</th><th>상태</th></tr></thead>
-            <tbody>
-              <tr><td>승강기 월간점검</td><td>07.07</td><td>엘리텍</td><td><span class="badge badge-warn">예정</span></td></tr>
-              <tr><td>에너지 사용량 점검</td><td>07.10</td><td>자체</td><td><span class="badge badge-warn">예정</span></td></tr>
-              <tr><td>전기 절연저항 측정</td><td>07.15</td><td>자체</td><td><span class="badge badge-warn">예정</span></td></tr>
-              <tr><td>CCTV 분기점검</td><td>07.20</td><td>보안테크</td><td><span class="badge badge-warn">예정</span></td></tr>
-              <tr><td>냉각탑 수질관리</td><td>07.31</td><td>위생검사원</td><td><span class="badge badge-danger">D-28</span></td></tr>
-            </tbody></table>
+            <tbody id="thisMonthTbl"><!-- 연동 --></tbody></table>
           </div>
         </div>
         <!-- 설비 상태 현황 -->
@@ -561,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function(){
           <th style="min-width:160px">점검항목</th><th>분류</th><th>주기</th><th>법정</th>
           <th>1월</th><th>2월</th><th>3월</th><th>4월</th><th>5월</th><th>6월</th>
           <th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th>
-        </tr></thead><tbody id="scheduleBody"></tbody></table>
+        </tr></thead><tbody id="yearPlanTbl"></tbody></table>
       </div></div>
     </div>
 
@@ -646,7 +640,20 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <script>
 // ── 데이터 ──────────────────────────────────────────────
-const DATA = {
+// DATA: localStorage에서 불러오거나 기본값 사용
+function loadDashData(){
+  try{
+    const saved = localStorage.getItem('fm_dashboard_data');
+    if(saved) return JSON.parse(saved);
+  }catch(e){}
+  return null;
+}
+function saveDashData(){
+  localStorage.setItem('fm_dashboard_data', JSON.stringify(DATA));
+  alert('✅ 저장 완료! 새로고침 후에도 유지됩니다.');
+}
+
+const DEFAULT_DATA = {
   facilities:[
     {no:1,name:"소방펌프",cat:"소방설비",loc:"기계실",life:20,nextReplace:"2032-01",status:"정상",vendor:"소방안전(주)"},
     {no:2,name:"스프링클러",cat:"소방설비",loc:"전층",life:20,nextReplace:"2032-01",status:"정상",vendor:"소방안전(주)"},
@@ -738,9 +745,16 @@ const DATA = {
 };
 
 // ── 초기화 ──────────────────────────────────────────────
+// DATA 초기화 (localStorage 우선)
+const savedDash = loadDashData();
+if(savedDash){
+  Object.assign(DATA, savedDash);
+}
+
 window.onload=()=>{
   setToday();
   renderAll();
+  renderLinked();  // 연간점검계획 연동 데이터 렌더
 };
 
 function setToday(){
@@ -753,6 +767,8 @@ function setToday(){
   const nr=document.getElementById('nRepDate');
   if(nr) nr.value='2026-07-04';
 }
+
+const DATA = Object.assign({}, DEFAULT_DATA);
 
 function renderAll(){
   renderFacility();renderInspect();renderRepair();renderSafety();
@@ -1422,6 +1438,194 @@ function copyDoc(id){
   const txt=document.getElementById(id).innerText;
   navigator.clipboard.writeText(txt).then(()=>alert('클립보드에 복사되었습니다!'));
 }
+
+// ══════════════════════════════════════════════
+// 연간점검계획 연동 함수들
+// ══════════════════════════════════════════════
+
+// 연간점검계획 데이터 불러오기
+function loadScheduleData(){
+  try{
+    const sm = localStorage.getItem('fm_settings_mech');
+    const se = localStorage.getItem('fm_settings_elec');
+    const sd = localStorage.getItem('fm_settings_edu');
+    const smp = localStorage.getItem('fm_mech_items');
+    const sep = localStorage.getItem('fm_elec_items');
+    return {
+      mech: sm ? JSON.parse(sm) : [],
+      elec: se ? JSON.parse(se) : [],
+      edu:  sd ? JSON.parse(sd) : [],
+      mechItems: smp ? JSON.parse(smp) : [],
+      elecItems: sep ? JSON.parse(sep) : [],
+    };
+  }catch(e){ return {mech:[],elec:[],edu:[],mechItems:[],elecItems:[]}; }
+}
+
+// 날짜 계산 헬퍼
+function calcNextDate(lastDate, cycle, unit){
+  if(!lastDate) return null;
+  const d = new Date(lastDate);
+  if(unit==='year') d.setFullYear(d.getFullYear() + cycle);
+  else d.setMonth(d.getMonth() + cycle);
+  return d;
+}
+function diffDays2(dateStr){
+  if(!dateStr) return 9999;
+  const t = new Date(dateStr); t.setHours(0,0,0,0);
+  const n = new Date(); n.setHours(0,0,0,0);
+  return Math.round((t-n)/(1000*60*60*24));
+}
+
+// D-Day 경보 렌더 (연간점검계획 연동)
+function renderScheduleAlerts(){
+  const sd = loadScheduleData();
+  const all = [...sd.mech, ...sd.elec, ...sd.edu];
+  if(!all.length) return;
+
+  const alertBox = document.getElementById('scheduleAlertBox');
+  if(!alertBox) return;
+
+  const alerts = [];
+  all.forEach(item=>{
+    const next = calcNextDate(item.lastDate, item.cycle, item.unit);
+    if(!next) return;
+    const dd = diffDays2(next.toISOString().slice(0,10));
+    if(dd <= 90) alerts.push({...item, dd, nextStr: next.toISOString().slice(0,10)});
+  });
+  alerts.sort((a,b)=>a.dd-b.dd);
+
+  if(!alerts.length){
+    alertBox.innerHTML = '<div class="alert alert-ok">✅ 90일 이내 기한 도래 법정점검 없음</div>';
+    return;
+  }
+  alertBox.innerHTML = alerts.map(a=>{
+    const cls = a.dd < 0 ? 'alert-danger' : a.dd <= 30 ? 'alert-danger' : 'alert-warn';
+    const label = a.dd < 0 ? `D+${Math.abs(a.dd)} 초과` : a.dd===0 ? 'D-Day' : `D-${a.dd}`;
+    return `<div class="alert ${cls}">
+      <strong>${label}</strong> ${a.name} 점검 예정 (${a.nextStr}) — ${a.vendor||a.person||'담당자'} 일정 확인 필요
+    </div>`;
+  }).join('');
+}
+
+// 이번달 예정 점검 렌더 (연간점검계획 연동)
+function renderThisMonthSchedule(){
+  const sd = loadScheduleData();
+  const all = [...sd.mech, ...sd.elec, ...sd.edu];
+  if(!all.length) return;
+
+  const tbl = document.getElementById('thisMonthTbl');
+  if(!tbl) return;
+
+  const now = new Date();
+  const thisMonth = now.getMonth()+1;
+  const thisYear = now.getFullYear();
+
+  const rows = [];
+  all.forEach(item=>{
+    const next = calcNextDate(item.lastDate, item.cycle, item.unit);
+    if(!next) return;
+    if(next.getMonth()+1 === thisMonth && next.getFullYear() === thisYear){
+      const dd = diffDays2(next.toISOString().slice(0,10));
+      rows.push({...item, dd, nextStr: next.toISOString().slice(0,10)});
+    }
+  });
+  rows.sort((a,b)=>new Date(a.nextStr)-new Date(b.nextStr));
+
+  if(!rows.length){
+    tbl.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#718096;padding:16px">이번 달 예정 점검 없음</td></tr>';
+    return;
+  }
+  tbl.innerHTML = rows.map(r=>{
+    const dd = r.dd;
+    const cls = dd<0?'color:#C00000;font-weight:700':dd<=7?'color:#E65100;font-weight:700':'';
+    const label = dd<0?`D+${Math.abs(dd)}`:`D-${dd}`;
+    return `<tr>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.nextStr.slice(5)}</td>
+      <td>${r.vendor||r.person||'-'}</td>
+      <td style="${cls}">${label}</td>
+    </tr>`;
+  }).join('');
+}
+
+// 연간 계획표 렌더 (연간점검계획 연동)
+function renderYearPlanFromSchedule(){
+  const tbl = document.getElementById('yearPlanTbl');
+  if(!tbl) return;
+  const sd = loadScheduleData();
+  const all = [...sd.mech, ...sd.elec, ...sd.edu];
+  if(!all.length) return;
+
+  const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const now = new Date();
+  const thisMonth = now.getMonth();
+
+  tbl.innerHTML = all.map((item,i)=>{
+    const next = calcNextDate(item.lastDate, item.cycle, item.unit);
+    const nextMonth = next ? next.getMonth() : -1;
+    const nextYear  = next ? next.getFullYear() : -1;
+    const isLegal   = item.cat && item.cat !== '기타';
+
+    const cells = months.map((_,mi)=>{
+      const isNext = nextMonth===mi && nextYear===now.getFullYear();
+      const isPast = i%2===0;
+      if(isNext){
+        return `<td style="background:#FEF3C7;text-align:center;font-weight:700;color:#D97706">●</td>`;
+      }
+      return `<td style="text-align:center;color:#CBD5E0">-</td>`;
+    }).join('');
+
+    const bg = i%2===0 ? '#f8faff' : '#fff';
+    const legalBadge = isLegal
+      ? `<span style="background:#FEE2E2;color:#C00000;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700">법정</span>`
+      : `<span style="background:#E2E8F0;color:#718096;font-size:10px;padding:1px 5px;border-radius:3px">자체</span>`;
+    return `<tr style="background:${bg}">
+      <td style="font-size:12px;font-weight:600;padding:5px 8px">${item.name}</td>
+      <td style="text-align:center;font-size:11px">${item.cat||'-'}</td>
+      <td style="text-align:center;font-size:11px">${item.cycle}${item.unit==='year'?'년':'개월'}</td>
+      <td style="text-align:center">${legalBadge}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+}
+
+// 법정점검 현황 렌더 (연간점검계획 연동)
+function renderLegalStatus(){
+  const tbl = document.getElementById('legalStatusTbl');
+  if(!tbl) return;
+  const sd = loadScheduleData();
+  const all = [...sd.mech, ...sd.elec];
+  if(!all.length) return;
+
+  const now = new Date();
+  tbl.innerHTML = all.map((item,i)=>{
+    const next = calcNextDate(item.lastDate, item.cycle, item.unit);
+    const dd = next ? diffDays2(next.toISOString().slice(0,10)) : 9999;
+    const nextStr = next ? next.toISOString().slice(0,10) : '-';
+    const status = dd < 0 ? '기한초과' : dd <= 30 ? '임박' : '정상';
+    const statusColor = dd < 0 ? '#C00000' : dd <= 30 ? '#D97706' : '#1a7f37';
+    const bg = i%2===0 ? '#f8faff' : '#fff';
+    return `<tr style="background:${bg}">
+      <td style="font-size:12px;font-weight:600;padding:5px 8px">${item.name}</td>
+      <td style="font-size:11px;color:#718096">${item.basis||'-'}</td>
+      <td style="text-align:center;font-size:11px">${item.cycle}${item.unit==='year'?'년':'개월'}</td>
+      <td style="text-align:center;font-size:11px">${item.lastDate||'-'}</td>
+      <td style="text-align:center;font-size:11px">${nextStr}</td>
+      <td style="text-align:center;font-weight:700;color:${statusColor}">${status}</td>
+      <td style="font-size:11px">${item.vendor||'-'}</td>
+      <td style="font-size:11px">${item.person||'-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// 전체 연동 렌더
+function renderLinked(){
+  renderScheduleAlerts();
+  renderThisMonthSchedule();
+  renderYearPlanFromSchedule();
+  renderLegalStatus();
+}
+
 </script>
 </body>
 </html>
