@@ -398,6 +398,8 @@ function saveData(){
     localStorage.setItem('fm_settings_edu',  JSON.stringify(SETTINGS.edu));
     localStorage.setItem('fm_mech_items', JSON.stringify(MECH_ITEMS));
     localStorage.setItem('fm_elec_items', JSON.stringify(ELEC_ITEMS));
+    // 저장 시각 기록 (대시보드 연동용)
+    localStorage.setItem('fm_last_saved', new Date().toISOString());
   }catch(e){ console.log('saveData 오류:', e); }
 }
 
