@@ -51,12 +51,13 @@ table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:var(--navy4);color:var(--navy);font-weight:700;padding:7px 8px;text-align:center;border:1px solid var(--gray2);white-space:nowrap}
 td{padding:5px 7px;border:1px solid var(--gray2);vertical-align:middle}
 /* 달력 셀 */
-.mc{text-align:center;padding:4px 2px!important;font-size:11px;font-weight:700}
-.mc-done{background:#bbdefb;color:#0d47a1}
-.mc-plan{background:#c8e6c9;color:#1b5e20}
-.mc-legal{background:#ffe0b2;color:#e65100}
-.mc-over{background:#ffcdd2;color:#b71c1c}
-.mc-now{outline:2px solid var(--red);outline-offset:-1px}
+.mc{text-align:center;padding:4px 2px!important;font-size:12px;font-weight:700}
+.mc-done{background:#1565C0;color:#fff;border-radius:3px}        /* 완료 - 진파랑 */
+.mc-plan{background:#2E7D32;color:#fff;border-radius:3px}        /* 계획 - 진초록 */
+.mc-legal{background:#E65100;color:#fff;border-radius:3px}       /* 법정 - 주황 */
+.mc-over{background:#B71C1C;color:#fff;border-radius:3px;animation:blink .8s infinite} /* 기한초과 - 빨강+깜빡 */
+.mc-now{outline:2px solid #F0A500;outline-offset:-1px}           /* 이번달 - 금색 테두리 */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.6}}
 /* 배지 */
 .bd{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px}
 .bd-ok{background:var(--green2);color:var(--green)}
@@ -157,12 +158,13 @@ select.ei{cursor:pointer}
 
 <!-- 기계설비 계획표 -->
 <div id="pg-mech" class="pg">
-  <div class="pg-title">⚙️ 기계설비 연간 점검보수 계획표 <span class="sub" id="mechYear"></span></div>
+  <div class="pg-title">⚙️ 기계설비 연간 점검보수 계획표 및 진행상태 <span class="sub" id="mechYear"></span></div>
   <div style="display:flex;gap:10px;margin-bottom:8px;font-size:11px;flex-wrap:wrap">
-    <span style="background:#bbdefb;color:#0d47a1;padding:2px 7px;border-radius:3px;font-weight:700">◎ 완료</span>
-    <span style="background:#c8e6c9;color:#1b5e20;padding:2px 7px;border-radius:3px;font-weight:700">● 계획</span>
-    <span style="background:#ffe0b2;color:#e65100;padding:2px 7px;border-radius:3px;font-weight:700">★ 법정</span>
-    <span style="background:#ffcdd2;color:#b71c1c;padding:2px 7px;border-radius:3px;font-weight:700">⚠ 기한초과</span>
+    <span style="background:#1565C0;color:#fff;padding:3px 10px;border-radius:4px;font-weight:700">◎ 완료</span>
+    <span style="background:#2E7D32;color:#fff;padding:3px 10px;border-radius:4px;font-weight:700">● 계획</span>
+    <span style="background:#E65100;color:#fff;padding:3px 10px;border-radius:4px;font-weight:700">★ 법정</span>
+    <span style="background:#B71C1C;color:#fff;padding:3px 10px;border-radius:4px;font-weight:700">⚠ 기한초과</span>
+    <span style="background:#F0A500;color:#111;padding:3px 10px;border-radius:4px;font-weight:700">📅 이번달</span>
   </div>
   <div class="btn-row">
     <button class="btn btn-primary" onclick="addPlan('mech')">➕ 항목 추가</button>
@@ -183,7 +185,7 @@ select.ei{cursor:pointer}
 
 <!-- 전기설비 계획표 -->
 <div id="pg-elec" class="pg">
-  <div class="pg-title">⚡ 전기설비 연간 점검보수 계획표 <span class="sub" id="elecYear"></span></div>
+  <div class="pg-title">⚡ 전기설비 연간 점검보수 계획표 및 진행상태 <span class="sub" id="elecYear"></span></div>
   <div style="display:flex;gap:10px;margin-bottom:8px;font-size:11px;flex-wrap:wrap">
     <span style="background:#bbdefb;color:#0d47a1;padding:2px 7px;border-radius:3px;font-weight:700">◎ 완료</span>
     <span style="background:#c8e6c9;color:#1b5e20;padding:2px 7px;border-radius:3px;font-weight:700">● 계획</span>
@@ -506,7 +508,10 @@ function renderPlan(items, tblId){
         const over=nxt&&diffDays(nxt.toISOString().slice(0,10))<0;
         return `<td class="mc ${over?'mc-over':'mc-legal'}${nowCls}">★</td>`;
       }
-      if(pm.includes(m)) return `<td class="mc mc-plan${nowCls}">●</td>`;
+      // 지난달 이전 계획 → 완료로 표시
+      const isPast = m < TODAY.getMonth()+1 && YEAR === TODAY.getFullYear() ||
+                     YEAR < TODAY.getFullYear();
+      if(pm.includes(m)) return `<td class="mc ${isPast?'mc-done':'mc-plan'}${nowCls}">●</td>`;
       return `<td class="mc${nowCls}"></td>`;
     }).join('');
     const lb=item.legal?`<span class="bd bd-legal" style="font-size:9px">법정</span>`:'';
