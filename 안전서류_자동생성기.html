@@ -5658,17 +5658,17 @@ var __async = (__this, __arguments, generator) => {
     function utf8CheckExtraBytes(self2, buf, p) {
       if ((buf[0] & 192) !== 128) {
         self2.lastNeed = 0;
-        return " ";
+        return "�";
       }
       if (self2.lastNeed > 1 && buf.length > 1) {
         if ((buf[1] & 192) !== 128) {
           self2.lastNeed = 1;
-          return " ";
+          return "�";
         }
         if (self2.lastNeed > 2 && buf.length > 2) {
           if ((buf[2] & 192) !== 128) {
             self2.lastNeed = 2;
-            return " ";
+            return "�";
           }
         }
       }
@@ -5697,7 +5697,7 @@ var __async = (__this, __arguments, generator) => {
     function utf8End(buf) {
       var r = buf && buf.length ? this.write(buf) : "";
       if (this.lastNeed)
-        return r + " ";
+        return r + "�";
       return r;
     }
     function utf16Text(buf, i) {
@@ -20177,13 +20177,13 @@ body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;background:#eef2f7;f
 <div class="hdr">
   <span style="font-size:19px">📝</span>
   <h1>안전서류 3종 자동생성기</h1>
-  <span class="hdr-badge">WORD 다운로드</span>
+  <span class="hdr-badge">WORD · HWP 다운로드</span>
   <span class="hdr-sub">한국마사회시설관리(주) 대구사업소</span>
 </div>
 
 <div class="wrap">
 
-  <div class="tip">💡 작업 정보를 입력하고 <strong>[Word 3종 문서 생성]</strong> 버튼을 클릭하면 <strong>위험성평가표 · TBM 일지 · 작업완료보고서</strong>가 하나의 Word 파일로 즉시 다운로드됩니다.</div>
+  <div class="tip">💡 작업 정보를 입력하고 <strong>[Word 3종 문서 생성]</strong> 또는 <strong>[한글(HWP) 3종 문서 생성]</strong> 버튼을 클릭하면 <strong>위험성평가표 · TBM 일지 · 작업완료보고서</strong> 3종이 즉시 다운로드됩니다.</div>
 
   <!-- 빠른 선택 -->
   <div class="card">
@@ -20271,10 +20271,15 @@ body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;background:#eef2f7;f
     </div>
   </div>
 
-  <div class="gen-wrap">
+  <div class="gen-wrap" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
     <button class="btn-gen" id="genBtn" onclick="generate()">
       <span id="genIcon">📄</span>
-      <span id="genTxt">Word 3종 문서 생성 (위험성평가 + TBM + 완료보고서)</span>
+      <span id="genTxt">Word 3종 문서 생성</span>
+    </button>
+    <button class="btn-gen" id="genBtn2" onclick="generateHWP()"
+      style="background:#00558A">
+      <span id="genIcon2">📋</span>
+      <span id="genTxt2">한글(HWP) 3종 문서 생성</span>
     </button>
   </div>
 
@@ -20689,6 +20694,374 @@ async function generate(){
     setTimeout(()=>{icon.textContent='📄';txt.textContent='Word 3종 문서 생성 (위험성평가 + TBM + 완료보고서)';},4000);
   }
 }
+
+// ══════════════════════════════════════════
+// 한글(HWP) RTF 생성 함수
+// ══════════════════════════════════════════
+
+function toRtf(str){
+  // 한글/특수문자 → RTF 유니코드 변환
+  let out = '';
+  for(let i=0; i<str.length; i++){
+    const code = str.charCodeAt(i);
+    if(code > 127){
+      // 유니코드 문자 (한글 등)
+      const signed = code > 32767 ? code - 65536 : code;
+      out += `\u${signed}?`;
+    } else {
+      // ASCII 특수문자 이스케이프
+      if(str[i]==='\\') out += '\\\\';
+      else if(str[i]==='{') out += '\\{';
+      else if(str[i]==='}') out += '\\}';
+      else out += str[i];
+    }
+  }
+  return out;
+}
+
+function rtfBold(str){ return `{\\b ${toRtf(str)}}`; }
+function rtfCell(str, w, opts={}){
+  const bold = opts.bold ? '\\b ' : '';
+  const align = opts.center ? '\\qc ' : opts.right ? '\\qr ' : '';
+  const bg = opts.bg ? `\\clcbpat${opts.bg}\\clcbpat${opts.bg}` : '';
+  const width = w || 2000;
+  return `\\clbrdrt\\brdrs\\clbrdrl\\brdrs\\clbrdrb\\brdrs\\clbrdrr\\brdrs\\cellx${width}`;
+}
+
+function makeRtfDoc(title, sections){
+  const header = `{\\rtf1\\ansi\\ansicpg949\\deff0
+{\\fonttbl{\\f0\\fnil\\fcharset129 \\'b9\'fd\'c0\'ba \'b0\'ed\'b5\'f5;}{\\f1\\fnil\'b9\'fd\'c0\'ba \'b0\'ed\'b5\'f5;}}
+{\\colortbl;\\red31\\green78\\blue121;\\red255\\green255\\blue255;\\red200\\green220\\blue240;\\red252\\green228\\blue214;\\red255\\green242\\blue204;\\red226\\green239\\blue218;}
+\\paperw16840\\paperh23811\\margl1000\\margr1000\\margt800\\margb800
+\\widowctrl\\ftnbj\\aenddoc\\hyphhotz0\\dntblnsbdb\\lytprtmet\\allowfieldendsel\\lnbrkrule\\nobrkwrptbl\\noextrasprl\\pgbrdrhead\\pgbrdrfoot
+`;
+  return header + sections.join('\\page
+') + '}';
+}
+
+// RTF 테이블 행 생성
+function rtfRow(cells){
+  // cells: [{text, width, bold, center, bg, colspan}]
+  let cellDefs = '';
+  let cellContents = '';
+  let xPos = 500;
+  cells.forEach(cell => {
+    const w = cell.width || 2000;
+    xPos += w;
+    const bgColor = cell.bg ? `\\clcbpat${cell.bg}` : '';
+    cellDefs += `\\clbrdrt\\brdrth\\clbrdrl\\brdrth\\clbrdrb\\brdrth\\clbrdrr\\brdrth${bgColor}\\cellx${xPos}`;
+    const align = cell.center ? '\\qc' : cell.right ? '\\qr' : '\\ql';
+    const bold = cell.bold ? '\\b' : '';
+    const size = cell.size ? `\\fs${cell.size*2}` : '\\fs18';
+    cellContents += `\\pard\\intbl${align}${bold}${size} ${toRtf(cell.text||'')}\\cell
+`;
+  });
+  return `\\trowd\\trgaph108\\trleft500\\trqc
+${cellDefs}
+${cellContents}\\row
+`;
+}
+
+function rtfTitle(text){
+  return `\\pard\\qc\\b\\fs32 ${toRtf(text)}\\b0\\fs20\\par
+`;
+}
+function rtfPara(text, opts={}){
+  const bold = opts.bold ? '\\b ' : '';
+  const size = opts.size ? `\\fs${opts.size*2} ` : '\\fs18 ';
+  return `\\pard\\ql\\sb60\\sa60 ${bold}${size}${toRtf(text)}\\b0\\par
+`;
+}
+
+async function generateHWP(){
+  const name = document.getElementById('wName').value.trim();
+  if(!name){alert('작업명을 입력하세요!');return;}
+
+  const btn = document.getElementById('genBtn2');
+  const icon = document.getElementById('genIcon2');
+  const txt = document.getElementById('genTxt2');
+  btn.disabled=true; icon.className='spin'; icon.textContent='⏳'; txt.textContent='생성 중...';
+
+  try{
+    const date = document.getElementById('wDate').value||new Date().toISOString().slice(0,10);
+    const place = document.getElementById('wPlace').value||'작업장소';
+    const vendor = document.getElementById('wVendor').value||'협력업체';
+    const period = document.getElementById('wPeriod').value||'1일';
+    const type = document.getElementById('wType').value;
+    const note = document.getElementById('wNote').value;
+    const org = document.getElementById('sOrg').value;
+    const leader = document.getElementById('sLeader').value;
+    const elec = document.getElementById('sElec').value;
+    const p1 = document.getElementById('sP1').value;
+    const p2 = document.getElementById('sP2').value;
+
+    const d = new Date(date);
+    const dk = d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+    const risks = RDB[type]||RDB['기타'];
+    const tbm = TDB[type]||TDB['기타'];
+
+    // ── [1] 위험성평가표 RTF ──
+    let sec1 = rtfTitle('위 험 성 평 가 표') + '\\par
+';
+
+    // 헤더 테이블
+    sec1 += rtfRow([
+      {text:'사업장명',width:1200,bold:true,bg:3},{text:org,width:3000},
+      {text:'평가일자',width:1200,bold:true,bg:3},{text:date,width:2000}
+    ]);
+    sec1 += rtfRow([
+      {text:'평가대상',width:1200,bold:true,bg:3},{text:name,width:3000},
+      {text:'작업장소',width:1200,bold:true,bg:3},{text:place,width:2000}
+    ]);
+    sec1 += rtfRow([
+      {text:'평가근거',width:1200,bold:true,bg:3},{text:'',width:3000},
+      {text:'평가자',width:1200,bold:true,bg:3},{text:leader+' (반장)',width:2000}
+    ]);
+    sec1 += rtfRow([
+      {text:'평가구분',width:1200,bold:true,bg:3},
+      {text:'□ 정기평가(년1회)   ■ 수시평가   □ 최초평가',width:3000},
+      {text:'다음평가일',width:1200,bold:true,bg:3},{text:'',width:2000}
+    ]);
+    sec1 += '\\par
+';
+
+    // 위험성평가 헤더
+    sec1 += rtfRow([
+      {text:'작업단계',width:900,bold:true,center:true,bg:1},
+      {text:'위험요인',width:2000,bold:true,center:true,bg:1},
+      {text:'가능성',width:600,bold:true,center:true,bg:1},
+      {text:'심각성',width:600,bold:true,center:true,bg:1},
+      {text:'위험등급',width:800,bold:true,center:true,bg:1},
+      {text:'개선대책(안전조치)',width:2500,bold:true,center:true,bg:1},
+      {text:'가능성',width:600,bold:true,center:true,bg:1},
+      {text:'심각성',width:600,bold:true,center:true,bg:1},
+      {text:'위험등급',width:800,bold:true,center:true,bg:1},
+    ]);
+
+    // 위험요인 행
+    risks.forEach((r,i)=>{
+      const bg = r.c>=6?4:r.c>=3?5:6;
+      const bg2 = r.f>=6?4:r.f>=3?5:6;
+      sec1 += rtfRow([
+        {text:r.s, width:900, center:true, bg:3},
+        {text:r.r, width:2000},
+        {text:String(r.a), width:600, center:true},
+        {text:String(r.b), width:600, center:true},
+        {text:String(r.c), width:800, center:true, bold:true, bg},
+        {text:r.m, width:2500},
+        {text:String(r.d), width:600, center:true},
+        {text:String(r.e), width:600, center:true},
+        {text:String(r.f), width:800, center:true, bold:true, bg:bg2},
+      ]);
+    });
+
+    // 특이사항
+    sec1 += rtfRow([
+      {text:'특이사항',width:900,bold:true,center:true,bg:5},
+      {text:'■ 석면 함유 보온재 여부 반드시 확인 — 함유 시 즉시 작업 중지, 전문업체 의뢰  ■ 2m 이상 고소작업 시 안전대 착용 의무  ■ 본 위험성평가는 TBM 전 공유·서명 후 작업 개시'+(note?' ■ '+note:''),width:7500}
+    ]);
+    sec1 += '\\par
+';
+
+    // 범례
+    sec1 += rtfRow([
+      {text:'위험등급: 1~2 낮음(허용)',width:2800,bold:true,center:true,bg:3},
+      {text:'3~4 보통(주의) / 6~9 높음(개선필요)',width:3200,bold:true,center:true,bg:3},
+      {text:'가능성·심각성: 1낮음 / 2보통 / 3높음',width:2400,bold:true,center:true,bg:3},
+    ]);
+    sec1 += '\\par
+';
+
+    // 결재
+    sec1 += rtfRow([
+      {text:'작  성',width:2000,bold:true,center:true,bg:1},
+      {text:'검  토',width:2000,bold:true,center:true,bg:1},
+      {text:'승  인',width:2000,bold:true,center:true,bg:1},
+      {text:'시행일자',width:2400,bold:true,center:true,bg:1},
+    ]);
+    sec1 += rtfRow([
+      {text:vendor+'(협력업체)',width:2000,center:true},
+      {text:leader+' (반장)',width:2000,center:true},
+      {text:'시 설 팀 장',width:2000,center:true},
+      {text:date,width:2400,center:true},
+    ]);
+    sec1 += rtfRow([
+      {text:'(서  명)',width:2000,center:true},{text:'(서  명)',width:2000,center:true},
+      {text:'(서  명)',width:2000,center:true},{text:'',width:2400},
+    ]);
+
+    // ── [2] TBM 일지 RTF ──
+    let sec2 = rtfRow([{text:'< TBM(작업 시작 전 안전 회의) 회의록 >',width:8400,bold:true,center:true,bg:1}]);
+    sec2 += rtfRow([
+      {text:'일  시',width:1100,bold:true,bg:3},
+      {text:dk+'  09:00 ~ 09:10',width:3600},
+      {text:'장  소',width:1100,bold:true,bg:3},
+      {text:place,width:2600}
+    ]);
+    sec2 += rtfRow([{text:'작 업 명',width:1100,bold:true,bg:3},{text:'시설 업무',width:7300}]);
+    sec2 += rtfRow([{text:'작업내용',width:1100,bold:true,bg:3},{text:name,width:7300,bold:true}]);
+    sec2 += rtfRow([{text:'위험성평가',width:1100,bold:true,bg:3},{text:'■ 정기평가 포함 실시   □ 수시평가 실시',width:7300}]);
+    sec2 += rtfRow([{text:'안전작업\n허가서',width:1100,bold:true,bg:3},{text:tbm.permit||'□ 발행   ■ 미발행(해당 없음)',width:7300}]);
+
+    // 잠재위험요인 헤더
+    sec2 += rtfRow([
+      {text:'잠재위험요인',width:3500,bold:true,center:true,bg:1},
+      {text:'개선대책 및 안전조치 여부 사전점검',width:3800,bold:true,center:true,bg:1},
+      {text:'예/아니오',width:1100,bold:true,center:true,bg:1},
+    ]);
+
+    // 잠재위험요인 행
+    (tbm.risks||[]).forEach((r,i)=>{
+      sec2 += rtfRow([
+        {text:r,width:3500},
+        {text:(tbm.counters||[])[i]||'',width:3800},
+        {text:'예  /  아니오',width:1100,center:true},
+      ]);
+    });
+
+    // 중점관리
+    sec2 += rtfRow([{text:'■ 중점관리 위험요인',width:8400,bold:true,bg:5}]);
+    sec2 += rtfRow([
+      {text:'선정',width:600,bold:true,bg:3},{text:tbm.center||'',width:7800,bold:true}
+    ]);
+    sec2 += rtfRow([
+      {text:'대책',width:600,bold:true,bg:3},{text:(tbm.counter||'').replace(/\n/g,' '),width:7800}
+    ]);
+
+    // 종료 후 미팅
+    sec2 += rtfRow([{text:'■ 작업 종료 후 미팅',width:8400,bold:true,bg:6}]);
+    sec2 += rtfRow([{text:(tbm.end||'').replace(/\n/g,'  '),width:8400}]);
+
+    // 참석자
+    sec2 += rtfRow([{text:'■ 참석자 확인  TBM 리더: '+leader+' (서명)',width:8400,bold:true,bg:1}]);
+    sec2 += rtfRow([
+      {text:'소  속',width:1400,bold:true,bg:3},{text:'성  명',width:1400,bold:true,bg:3},
+      {text:'확  인',width:1400,bold:true,bg:3},{text:'소  속',width:1400,bold:true,bg:3},
+      {text:'성명/확인',width:2800,bold:true,bg:3},
+    ]);
+    [elec,p1,p2].forEach(n=>{
+      sec2 += rtfRow([
+        {text:'시  설',width:1400},{text:n,width:1400},
+        {text:'(서 명)',width:1400},{text:'',width:1400},{text:'',width:2800},
+      ]);
+    });
+    for(let i=0;i<3;i++){
+      sec2 += rtfRow([{text:'',width:1400},{text:'',width:1400},{text:'',width:1400},{text:'',width:1400},{text:'',width:2800}]);
+    }
+
+    // ── [3] 작업완료보고서 RTF ──
+    let sec3 = rtfTitle('작 업 완 료 보 고 서') + '\\par
+';
+
+    sec3 += rtfRow([{text:org+'  |  '+place,width:8400,center:true}]);
+    sec3 += rtfRow([
+      {text:'작 업 일 시',width:1500,bold:true,bg:3},
+      {text:dk,width:3300},
+      {text:'09:00 ~ 완료 시까지 ('+period+')',width:3600}
+    ]);
+    sec3 += rtfRow([{text:'작  업  명',width:1500,bold:true,bg:3},{text:name,width:6900,bold:true}]);
+    sec3 += rtfRow([{text:'작 업 장 소',width:1500,bold:true,bg:3},{text:org+' '+place,width:6900}]);
+    sec3 += rtfRow([{text:'작 업 인 원',width:1500,bold:true,bg:3},{text:vendor+'(협력업체) / 자체: '+leader+'(반장), '+p1+', '+p2,width:6900}]);
+    sec3 += rtfRow([{text:'작 업 근 거',width:1500,bold:true,bg:3},{text:note||'시설 정기 유지보수 계획 및 현장 점검 결과에 따른 작업',width:6900}]);
+
+    // 작업전 점검
+    sec3 += rtfRow([{text:'■ 작업 전 점검 내용',width:8400,bold:true,bg:1}]);
+    sec3 += rtfRow([
+      {text:'점 검 항 목',width:2400,bold:true,center:true,bg:1},
+      {text:'점 검 결 과',width:4000,bold:true,center:true,bg:1},
+      {text:'비  고',width:2000,bold:true,center:true,bg:1},
+    ]);
+    [
+      ['TBM 실시','완료 (09:00~09:10)','참석자 서명'],
+      ['위험성평가 공유·서명','완료 (전원 서명 후 작업 개시)',''],
+      ['개인보호구 착용 확인','완료 (마스크·보안경·방호복·장갑)',''],
+      ['이동식 사다리·비계 점검','완료 (잠금장치·아웃리거 확인)',''],
+      ['강제 환기 장치 가동','완료 (작업 중 지속 환기)',''],
+      ['하부 바리케이드 설치','완료 (작업구역 출입통제)','감시원 배치'],
+    ].forEach(([a,b,cc])=>{
+      sec3 += rtfRow([{text:a,width:2400},{text:b,width:4000},{text:cc,width:2000,bold:!!cc}]);
+    });
+
+    // 작업 수행 내용
+    sec3 += rtfRow([{text:'■ 작업 수행 내용',width:8400,bold:true,bg:1}]);
+    const steps = [
+      '① 작업 전 TBM 실시 및 위험성평가 공유·서명 (09:00~09:10)',
+      '② 개인보호구 착용 확인 및 작업구역 출입통제 조치',
+      '③ '+name+' 작업 수행',
+      '④ 작업 진행 중 이상 유무 지속 모니터링',
+      '⑤ 작업 완료 후 결과 육안 확인 및 이상 무 확인',
+      '⑥ 공구·자재 전수 수량 확인 및 정리정돈 완료',
+      '⑦ 작업구역 청소 및 출입통제 해제',
+      '⑧ 작업 완료 보고 및 담당자 서명',
+    ];
+    sec3 += rtfRow([{text:steps.join('  '),width:8400}]);
+
+    // 사진 첨부
+    sec3 += rtfRow([{text:'■ 작업 전·후 사진 첨부',width:8400,bold:true,bg:1}]);
+    sec3 += rtfRow([
+      {text:'구  분',width:1500,bold:true,bg:1},
+      {text:'작  업  전',width:3450,bold:true,center:true,bg:1},
+      {text:'작  업  후',width:3450,bold:true,center:true,bg:1},
+    ]);
+    ['작업 현장','주요 설비·부위','완료 상태'].forEach(r=>{
+      sec3 += rtfRow([
+        {text:r,width:1500,bg:3},{text:'[ 사진 첨부 ]',width:3450,center:true},{text:'[ 사진 첨부 ]',width:3450,center:true}
+      ]);
+    });
+
+    // 특이사항
+    sec3 += rtfRow([{text:'■ 특이사항 및 종합의견',width:8400,bold:true,bg:1}]);
+    sec3 += rtfRow([
+      {text:'특이사항',width:1500,bold:true,bg:3},
+      {text:'· 작업 기간 중 특이사항 없음  · 안전사고 없음'+(note?' · '+note:''),width:6900}
+    ]);
+    sec3 += rtfRow([
+      {text:'종합의견',width:1500,bold:true,bg:3},
+      {text:'· '+org+' '+name+'을 안전수칙을 철저히 이행하여 완료하였음.',width:6900}
+    ]);
+
+    // 결재
+    sec3 += rtfRow([{text:'■ 결재',width:8400,bold:true,bg:1}]);
+    sec3 += rtfRow([
+      {text:'작  성',width:2800,bold:true,center:true,bg:1},
+      {text:'검  토',width:2800,bold:true,center:true,bg:1},
+      {text:'승  인',width:2800,bold:true,center:true,bg:1},
+    ]);
+    sec3 += rtfRow([
+      {text:vendor+'(협력업체)',width:2800,center:true},
+      {text:leader+' (반장)',width:2800,center:true},
+      {text:'시  설  팀  장',width:2800,center:true},
+    ]);
+    sec3 += rtfRow([
+      {text:'(서  명)',width:2800,center:true},
+      {text:'(서  명)',width:2800,center:true},
+      {text:'(서  명)',width:2800,center:true},
+    ]);
+
+    // RTF 파일 생성
+    const rtfContent = makeRtfDoc('안전서류3종', [sec1, sec2, sec3]);
+
+    // BOM + RTF 다운로드
+    const blob = new Blob([rtfContent], {type:'application/rtf;charset=euc-kr'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '안전서류_3종_'+name.replace(/\s/g,'_')+'_'+date+'.rtf';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    btn.disabled=false; icon.className=''; icon.textContent='✅';
+    txt.textContent='생성 완료! 한글(HWP)에서 열어보세요';
+    setTimeout(()=>{icon.textContent='📋';txt.textContent='한글(HWP) 3종 문서 생성';},3000);
+
+  }catch(e){
+    console.error(e);
+    btn.disabled=false; icon.className=''; icon.textContent='❌';
+    txt.textContent='오류: '+e.message;
+    setTimeout(()=>{icon.textContent='📋';txt.textContent='한글(HWP) 3종 문서 생성';},4000);
+  }
+}
+
 </script>
 </body>
 </html>
